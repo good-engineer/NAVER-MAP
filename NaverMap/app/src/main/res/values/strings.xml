@@ -1,3 +1,12 @@
 <resources>
     <string name="app_name">NaverMap</string>
+    <string name="action_settings"></string>
+    <string name="menu_search"></string>
+    <string name="search_hint">Search ...</string>
+
+
+    <!-- Default screen margins, per the Android Design guidelines. -->
+    <dimen name="activity_horizontal_margin">16dp</dimen>
+    <dimen name="activity_vertical_margin">16dp</dimen>
+
 </resources>

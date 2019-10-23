@@ -7,5 +7,20 @@
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorAccent">@color/colorAccent</item>
     </style>
+    <style name="Theme.MyCompatTheme" parent="@style/Theme.AppCompat.Light.DarkActionBar">
+        <item name="android:windowBackground">@color/common_google_signin_btn_text_dark</item>
+        <item name="android:actionBarStyle">@style/ActionBar</item>
+        <item name="actionBarStyle">@style/ActionBar</item>
+    </style>
+
+    <style name="ActionBar"
+        parent="@style/Widget.AppCompat.Light.ActionBar.Solid.Inverse">
+        <item name="android:background">@color/colorPrimary</item>
+        <item name="background">@color/colorPrimaryDark</item>
+    </style>
+
+    <color name="winBackground">#98cb4a</color>
+    <color name="background">#f76d3c</color>
+
 
 </resources>
