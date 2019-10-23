@@ -10,7 +10,7 @@ import com.naver.maps.map.NaverMap
 import com.naver.maps.map.OnMapReadyCallback
 
 class MainActivity : AppCompatActivity(),OnMapReadyCallback{
-    private lateinit var map:NaverMap
+    private lateinit var naverMap: NaverMap
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super<AppCompatActivity>.onCreate(savedInstanceState)
@@ -28,13 +28,26 @@ class MainActivity : AppCompatActivity(),OnMapReadyCallback{
 
 
 
-    override fun onMapReady(p0: NaverMap) {
-    map=p0
-        val uiSettings = map.uiSettings
+    override fun onMapReady(naverMap: NaverMap) {
+
+        val uiSettings = naverMap.uiSettings
         uiSettings.isCompassEnabled = false
         uiSettings.isLocationButtonEnabled = true
         uiSettings.isIndoorLevelPickerEnabled = true
         uiSettings.isZoomControlEnabled = true
+
+        // print 좌표 of a long clicked point, to use for setting the place as Destination
+        naverMap.setOnMapLongClickListener { point, coord ->
+            Toast.makeText(this, "${coord.latitude}, ${coord.longitude}",
+                Toast.LENGTH_SHORT).show()
+        }
+        // print location if location change happens
+        naverMap.addOnLocationChangeListener { location ->
+            Toast.makeText(this, "${location.latitude}, ${location.longitude}",
+                Toast.LENGTH_SHORT).show()
+        }
+
+
 
         // sample for printing 좌표
         //val coord = LatLng(37.5670135, 126.9783740)
