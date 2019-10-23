@@ -31,17 +31,9 @@ class SearchableActivity : ListActivity() {
 }
 
     private fun doMySearch(query:String) {
-        //get place information 
+        //get place information
     }
 
-    override fun onCreateOptionsMenu(menu:Menu):Boolean {
- // Inflate the menu; this adds items to the action bar if it is present.
-        menuInflater.inflate(R.menu.menu_main, menu)
-        val searchManager = getSystemService(Context.SEARCH_SERVICE) as SearchManager
-        val searchView = menu.findItem(R.id.menu_search).actionView as SearchView
-        searchView.setSearchableInfo(searchManager!!.getSearchableInfo(componentName))
-        return true
-}
 }
 
 
