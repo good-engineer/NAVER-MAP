@@ -3,13 +3,17 @@ package com.naver.navermap
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.Manifest
+import android.content.Context
 import android.widget.Toast
 import com.naver.maps.map.MapFragment
 import com.naver.maps.map.NaverMap
 import com.naver.maps.map.OnMapReadyCallback
 import android.content.pm.PackageManager
+import android.location.LocationManager
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import com.naver.maps.geometry.LatLng
+import com.naver.maps.map.overlay.Marker
 
 
 const val MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 1
@@ -32,12 +36,32 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
         mapFragment.getMapAsync(this)
 
+
         // permissions
         checkPermission()
+
+        //not working
+
+        //val lm = getSystemService(Context.LOCATION_SERVICE) as LocationManager
+        //val location = lm.getLastKnownLocation(LocationManager.GPS_PROVIDER)
+
+        //val marker = Marker()
+        //marker.position = LatLng(location.latitude, location.latitude)
+        //marker.map = naverMap
+
+        //lm?.requestLocationUpdates(LocationManager.GPS_PROVIDER,1000,1,gpsLocation)
 
 
 
     }
+    /*private val gpsLocation :LocationListener = object : LocationListener{
+        override fun onLocationChanged(location:Location?)  {
+            val marker = Marker()
+            marker.position = LatLng(location.latitude, location.latitude)
+            marker.map = naverMap
+        }
+    }*/
+
 
     fun checkPermission() {
 
@@ -71,12 +95,11 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                 grantResults
             )
         when (requestCode) {
+
             MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION -> {
                 if ((grantResults.isNotEmpty() && grantResults[0]
-                            == PackageManager.PERMISSION_GRANTED))
-                {
-                    //granted get current location and show on the map
-
+                            == PackageManager.PERMISSION_GRANTED)
+                ) { //granted
 
 
                 } else {
@@ -87,6 +110,8 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             }
         }
     }
+
+
 
 
     override fun onMapReady(naverMap: NaverMap) {
@@ -106,15 +131,20 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                 this, "${coord.latitude}, ${coord.longitude}",
                 Toast.LENGTH_SHORT
             ).show()
+
+            //not working
+            val marker = Marker()
+            marker.position = LatLng(coord.latitude, coord.latitude)
+            marker.map = naverMap
         }
 
         // print location if location change happens
-        naverMap.addOnLocationChangeListener { location ->
-            Toast.makeText(
-                this, "${location.latitude}, ${location.longitude}",
-                Toast.LENGTH_SHORT
-            ).show()
-        }
+        /* naverMap.addOnLocationChangeListener { location ->
+             Toast.makeText(
+                 this, "${location.latitude}, ${location.longitude}",
+                 Toast.LENGTH_SHORT
+             ).show()
+         }*/
 
 
     }
