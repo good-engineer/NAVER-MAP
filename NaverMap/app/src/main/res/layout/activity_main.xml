@@ -15,4 +15,12 @@
         app:navermap_locationButtonEnabled="true"
         app:navermap_tiltGesturesEnabled="false" />
 
+    <EditText
+        android:id="@+id/search"
+        android:background="@android:color/background_light"
+        android:layout_height="35dp"
+        android:layout_width="match_parent"
+        android:hint="Search Destination"
+        tools:ignore="MissingConstraints" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>

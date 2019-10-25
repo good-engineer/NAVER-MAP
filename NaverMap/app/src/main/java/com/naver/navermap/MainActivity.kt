@@ -31,16 +31,20 @@ class MainActivity : AppCompatActivity(),OnMapReadyCallback{
     override fun onMapReady(naverMap: NaverMap) {
 
         val uiSettings = naverMap.uiSettings
-        uiSettings.isCompassEnabled = false
-        uiSettings.isLocationButtonEnabled = true
-        uiSettings.isIndoorLevelPickerEnabled = true
-        uiSettings.isZoomControlEnabled = true
+            uiSettings.isCompassEnabled = false
+            uiSettings.isLocationButtonEnabled = true
+            uiSettings.isIndoorLevelPickerEnabled = true
+            uiSettings.isZoomControlEnabled = true
 
-        // print 좌표 of a long clicked point, to use for setting the place as Destination
+
+
+
+        // print 좌표 of a long clicked point, to set the place as Destination
         naverMap.setOnMapLongClickListener { point, coord ->
             Toast.makeText(this, "${coord.latitude}, ${coord.longitude}",
                 Toast.LENGTH_SHORT).show()
         }
+
         // print location if location change happens
         naverMap.addOnLocationChangeListener { location ->
             Toast.makeText(this, "${location.latitude}, ${location.longitude}",
@@ -49,9 +53,7 @@ class MainActivity : AppCompatActivity(),OnMapReadyCallback{
 
 
 
-        // sample for printing 좌표
-        //val coord = LatLng(37.5670135, 126.9783740)
-        //Toast.makeText(applicationContext,"위도: ${coord.latitude}, 경도: ${coord.longitude}", Toast.LENGTH_SHORT).show()
+
     }
 
 
