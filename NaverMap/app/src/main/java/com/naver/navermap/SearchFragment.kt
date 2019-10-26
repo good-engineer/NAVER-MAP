@@ -19,8 +19,9 @@ class SearchFragment : Fragment(){
         val editText = rootview.findViewById(R.id.search) as EditText
         editText.setOnEditorActionListener{ v, keyCode, event ->
             if (keyCode == EditorInfo.IME_ACTION_DONE) {
+                // use editText.text.toString()
                 Toast.makeText(
-                    activity, editText.text.toString(),
+                    context, editText.text.toString(),
                     Toast.LENGTH_SHORT
                 ).show()
             }

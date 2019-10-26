@@ -35,8 +35,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
         mapFragment.getMapAsync(this)
 
-        //get destination
-
         // permissions
         checkPermission()
 
