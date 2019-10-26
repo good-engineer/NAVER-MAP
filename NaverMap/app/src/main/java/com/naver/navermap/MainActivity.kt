@@ -31,8 +31,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             }
 
         //search fragment
-        val searchFragment = fm.findFragmentById(R.id.search_fragment) as SearchFragment
-        fm.beginTransaction().add(R.id.search_fragment, searchFragment).commit()
+        fm.beginTransaction().add(R.id.container, SearchFragment()).commit()
 
         mapFragment.getMapAsync(this)
 

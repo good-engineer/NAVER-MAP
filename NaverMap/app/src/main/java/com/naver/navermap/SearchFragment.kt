@@ -13,7 +13,7 @@ class SearchFragment : Fragment(){
     override fun onCreateView(inflater: LayoutInflater,
                                 container: ViewGroup?,
                                 savedInstanceState: Bundle?): View? {
-        val rootview :ViewGroup = inflater.inflate(R.layout.fragment_search, null) as ViewGroup
+        val rootview :ViewGroup = inflater.inflate(R.layout.fragment_search, container, false) as ViewGroup
 
         var destination = ""
         val editText = rootview.findViewById(R.id.search) as EditText
@@ -23,12 +23,11 @@ class SearchFragment : Fragment(){
                     activity, editText.text.toString(),
                     Toast.LENGTH_SHORT
                 ).show()
-                false
             }
             false
         }
 
 
-        return super.onCreateView(inflater, container, savedInstanceState)
+        return rootview
     }
 }
