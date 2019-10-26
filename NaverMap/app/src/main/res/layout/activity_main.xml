@@ -21,6 +21,8 @@
         android:layout_height="35dp"
         android:layout_width="match_parent"
         android:hint="Search Destination"
+        android:imeOptions="actionDone"
+        android:singleLine="true"
         tools:ignore="MissingConstraints" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
