@@ -8,8 +8,6 @@ import com.naver.maps.map.MapFragment
 import com.naver.maps.map.NaverMap
 import com.naver.maps.map.OnMapReadyCallback
 import android.content.pm.PackageManager
-import android.view.inputmethod.EditorInfo
-import android.widget.EditText
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 
@@ -32,21 +30,13 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                 fm.beginTransaction().add(R.id.map_fragment, it).commit()
             }
 
+        //search fragment
+        val searchFragment = fm.findFragmentById(R.id.search_fragment) as SearchFragment
+        fm.beginTransaction().add(R.id.search_fragment, searchFragment).commit()
+
         mapFragment.getMapAsync(this)
 
         //get destination
-        var destination = ""
-        val editText = findViewById(R.id.search) as EditText
-        editText.setOnEditorActionListener{ v, keyCode, event ->
-            if (keyCode == EditorInfo.IME_ACTION_DONE) {
-                Toast.makeText(
-                    this, editText.text.toString(),
-                    Toast.LENGTH_SHORT
-                ).show()
-                return@setOnEditorActionListener true
-            }
-            false
-        }
 
         // permissions
         checkPermission()

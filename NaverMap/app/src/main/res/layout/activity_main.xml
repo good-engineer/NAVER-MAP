@@ -1,28 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
     <fragment
         android:id="@+id/map_fragment"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
         android:name="com.naver.maps.map.MapFragment"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
         app:navermap_locationButtonEnabled="true"
         app:navermap_tiltGesturesEnabled="false" />
 
-    <EditText
-        android:id="@+id/search"
-        android:background="@android:color/background_light"
-        android:layout_height="35dp"
-        android:layout_width="match_parent"
-        android:hint="Search Destination"
-        android:imeOptions="actionDone"
-        android:singleLine="true"
-        tools:ignore="MissingConstraints" />
+    <fragment
+        android:id="@+id/search_fragment"
+        android:name="com.naver.navermap.SearchFragment"
+        android:layout_width="0dp"
+        android:layout_height="50dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/map_fragment" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
