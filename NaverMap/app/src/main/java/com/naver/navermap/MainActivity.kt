@@ -30,6 +30,9 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                 fm.beginTransaction().add(R.id.map_fragment, it).commit()
             }
 
+        //search fragment
+        fm.beginTransaction().add(R.id.container, SearchFragment()).commit()
+
         mapFragment.getMapAsync(this)
 
         // permissions
