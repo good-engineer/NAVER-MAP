@@ -13,11 +13,11 @@ class SearchFragment : Fragment(){
     override fun onCreateView(inflater: LayoutInflater,
                                 container: ViewGroup?,
                                 savedInstanceState: Bundle?): View? {
-        val rootview :ViewGroup = inflater.inflate(R.layout.fragment_search, container, false) as ViewGroup
+        val rootview = inflater.inflate(R.layout.fragment_search, container, false)
 
         var destination = ""
         val editText = rootview.findViewById(R.id.search) as EditText
-        editText.setOnEditorActionListener{ v, keyCode, event ->
+        editText.setOnEditorActionListener{ _, keyCode, _ ->
             if (keyCode == EditorInfo.IME_ACTION_DONE) {
                 // use editText.text.toString()
                 Toast.makeText(
