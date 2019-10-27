@@ -1,19 +1,22 @@
 package com.naver.navermap
 
 import android.util.Log
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
+import androidx.fragment.app.Fragment
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
-class RetroFitAPI : ViewModel() {
+class RetroFitAPI : Fragment() {
+    private lateinit var onChangeListener : OnChangeListener
     private lateinit var service : RetrofitService
-    var routeList = MutableLiveData<ArrayList<Pair<Double, Double>>>()
+    var routeList = ArrayList<Pair<Double, Double>>()
     init {
         setRetroFit()
+    }
+    interface OnChangeListener {
+        fun onChange(state: ArrayList<Pair<Double, Double>>)
     }
     private fun setRetroFit(){
         val retrofit = Retrofit.Builder()
@@ -27,6 +30,13 @@ class RetroFitAPI : ViewModel() {
         route?.forEach {list.add(Pair(it.location[1], it.location[0]))}
         return list
     }
+    fun setOnChangeLinstener(listener : (ArrayList<Pair<Double, Double>>) -> Unit){
+        onChangeListener = object : OnChangeListener {
+            override fun onChange(state: ArrayList<Pair<Double, Double>>) {
+                listener(state)
+            }
+        }
+    }
     public fun getRetroFitClient(startLat : Double, startLong : Double, endLat : Double, endLong : Double){
         Log.d("TAG", "request 시작")
         val response = service.requestRoute(coordinate = "${startLong},${startLat};${endLong},${endLat}", overview = false).enqueue(object :
@@ -37,7 +47,8 @@ class RetroFitAPI : ViewModel() {
                 if(response.isSuccessful) {
                     Log.d("TAG", "시작!")
                     Log.d("TAG", "${response.code()}")
-                    routeList.setValue(route2list(response.body()?.waypoints))
+                    response.body()?.waypoints?.forEach { routeList.add(Pair(it.location[1], it.location[0])) }
+                    Log.d("TAG", "${routeList[0]}")
                     Log.d("TAG", "보내기 완료")
                 }
             }

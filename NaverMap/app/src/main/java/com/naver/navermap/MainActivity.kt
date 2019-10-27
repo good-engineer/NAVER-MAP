@@ -107,18 +107,14 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         uiSettings.isZoomControlEnabled = true
 
         val retro = RetroFitAPI()
-        retro.getRetroFitClient(37.562,126.974, 37.563, 126.9841)
-        Log.d("TAG", "retro 설정")
-
-        mModel = ViewModelProviders.of(this).get(RetroFitAPI::class.java)
-        mModel.routeList.observe(this, Observer<ArrayList<Pair<Double, Double>>>{route  ->
-            for((lat, long) in route) {
-                Log.d("TAG", "lat : ${lat}, long : ${long}")
+        retro.setOnChangeLinstener {
+            for((lat, lng) in it){
                 val marker = Marker()
-                marker.position = LatLng(lat, long)
+                marker.position = LatLng(lat, lng)
                 marker.map = naverMap
             }
-        })
+        }
+        retro.getRetroFitClient(37.562,126.974, 37.563, 126.9841)
 
         // print 좌표 of a long clicked point, to set the place as Destination
         naverMap.setOnMapLongClickListener { _, coord ->
