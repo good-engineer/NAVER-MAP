@@ -9,14 +9,11 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
 class RetroFitAPI : Fragment() {
-    private lateinit var onChangeListener : OnChangeListener
+    private lateinit var listener : (ArrayList<Pair<Double, Double>>) -> Unit
     private lateinit var service : RetrofitService
     var routeList = ArrayList<Pair<Double, Double>>()
     init {
         setRetroFit()
-    }
-    interface OnChangeListener {
-        fun onChange(state: ArrayList<Pair<Double, Double>>)
     }
     private fun setRetroFit(){
         val retrofit = Retrofit.Builder()
@@ -31,11 +28,7 @@ class RetroFitAPI : Fragment() {
         return list
     }
     fun setOnChangeLinstener(listener : (ArrayList<Pair<Double, Double>>) -> Unit){
-        onChangeListener = object : OnChangeListener {
-            override fun onChange(state: ArrayList<Pair<Double, Double>>) {
-                listener(state)
-            }
-        }
+        this.listener = listener
     }
     public fun getRetroFitClient(startLat : Double, startLong : Double, endLat : Double, endLong : Double){
         Log.d("TAG", "request 시작")
@@ -48,6 +41,7 @@ class RetroFitAPI : Fragment() {
                     Log.d("TAG", "시작!")
                     Log.d("TAG", "${response.code()}")
                     response.body()?.waypoints?.forEach { routeList.add(Pair(it.location[1], it.location[0])) }
+                    listener(routeList)
                     Log.d("TAG", "${routeList[0]}")
                     Log.d("TAG", "보내기 완료")
                 }

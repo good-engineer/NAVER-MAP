@@ -39,15 +39,11 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         //search fragment
         fm.beginTransaction().add(R.id.container, SearchFragment()).commit()
         mapFragment.getMapAsync(this)
-
-
-
         // permissions
         checkPermission()
     }
 
     fun checkPermission() {
-
         //check if permission is granted
         if (ContextCompat.checkSelfPermission(
                 this,
@@ -83,9 +79,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                             == PackageManager.PERMISSION_GRANTED))
                 {
                     //granted get current location and show on the map
-
-
-
                 } else {
                     //denied
 
@@ -97,7 +90,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
 
     override fun onMapReady(naverMap: NaverMap) {
-
 
         // map fragment settings
         val uiSettings = naverMap.uiSettings
