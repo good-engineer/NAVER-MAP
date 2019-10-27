@@ -17,7 +17,7 @@ class RetroFitAPI : Fragment() {
     }
     private fun setRetroFit(){
         val retrofit = Retrofit.Builder()
-            .baseUrl("https://router.project-osrm.org")
+            .baseUrl(getString(R.string.baseUrl))
             .addConverterFactory(GsonConverterFactory.create())
             .build();
         service = retrofit.create(RetrofitService::class.java)
@@ -31,19 +31,14 @@ class RetroFitAPI : Fragment() {
         this.listener = listener
     }
     public fun getRetroFitClient(startLat : Double, startLong : Double, endLat : Double, endLong : Double){
-        Log.d("TAG", "request 시작")
         val response = service.requestRoute(coordinate = "${startLong},${startLat};${endLong},${endLat}", overview = false).enqueue(object :
             Callback<Route> {
             override fun onFailure(call: Call<Route>, t: Throwable) {
             }
             override fun onResponse(call: Call<Route>, response: Response<Route>) {
                 if(response.isSuccessful) {
-                    Log.d("TAG", "시작!")
-                    Log.d("TAG", "${response.code()}")
                     response.body()?.waypoints?.forEach { routeList.add(Pair(it.location[1], it.location[0])) }
                     listener(routeList)
-                    Log.d("TAG", "${routeList[0]}")
-                    Log.d("TAG", "보내기 완료")
                 }
             }
         })

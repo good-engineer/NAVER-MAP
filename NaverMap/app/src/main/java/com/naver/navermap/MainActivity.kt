@@ -8,24 +8,16 @@ import com.naver.maps.map.MapFragment
 import com.naver.maps.map.NaverMap
 import com.naver.maps.map.OnMapReadyCallback
 import android.content.pm.PackageManager
-import android.util.Log
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import androidx.lifecycle.Observer
-import androidx.lifecycle.ViewModelProviders
 import com.naver.maps.geometry.LatLng
 import com.naver.maps.map.overlay.Marker
 
-
 const val MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 1
 
-
 class MainActivity : AppCompatActivity(), OnMapReadyCallback {
-    private lateinit var naverMap: NaverMap
-    lateinit var mModel: RetroFitAPI
 
     override fun onCreate(savedInstanceState: Bundle?) {
-
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
@@ -98,6 +90,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         uiSettings.isIndoorLevelPickerEnabled = true
         uiSettings.isZoomControlEnabled = true
 
+        //retrofit API 설정 및 callback 함수 설정
         val retro = RetroFitAPI()
         retro.setOnChangeLinstener {
             for((lat, lng) in it){
@@ -106,6 +99,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                 marker.map = naverMap
             }
         }
+        //dummy coordination
         retro.getRetroFitClient(37.562,126.974, 37.563, 126.9841)
 
         // print 좌표 of a long clicked point, to set the place as Destination

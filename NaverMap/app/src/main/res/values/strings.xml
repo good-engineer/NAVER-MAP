@@ -1,7 +1,7 @@
 <resources>
     <string name="app_name">NaverMap</string>
     <string name="search_message">Search Destination</string>
-    <string name="baseUrl">http://re-build.tistory.com</string>
+    <string name="baseUrl">https://router.project-osrm.org</string>
 
     <!-- Default screen margins, per the Android Design guidelines. -->
     <dimen name="activity_horizontal_margin">16dp</dimen>
