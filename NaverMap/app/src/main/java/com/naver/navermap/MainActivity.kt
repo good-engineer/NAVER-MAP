@@ -11,28 +11,18 @@ import android.content.pm.PackageManager
 import android.util.Log
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import retrofit2.Call
-import retrofit2.Callback
-import retrofit2.Response
-import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
-import java.io.IOException
-import java.lang.RuntimeException
+import androidx.lifecycle.Observer
+import androidx.lifecycle.ViewModelProviders
+import com.naver.maps.geometry.LatLng
+import com.naver.maps.map.overlay.Marker
 
 
 const val MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 1
 
+
 class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var naverMap: NaverMap
-    private lateinit var service : RetrofitService
-
-    private fun setRetroFit(){
-        val retrofit = Retrofit.Builder()
-            .baseUrl("http://router.project-osrm.org")
-            .addConverterFactory(GsonConverterFactory.create())
-            .build();
-        service = retrofit.create(RetrofitService::class.java)
-    }
+    lateinit var mModel: RetroFitAPI
 
     override fun onCreate(savedInstanceState: Bundle?) {
 
@@ -48,34 +38,8 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
         //search fragment
         fm.beginTransaction().add(R.id.container, SearchFragment()).commit()
-
         mapFragment.getMapAsync(this)
 
-        setRetroFit()
-        Log.d("TAG", "request 시작")
-        val response = service.requestRoute(coordinate = "37.422,-122.084;37.57,-126.977;").enqueue(object : Callback<Route> {
-            override fun onFailure(call: Call<Route>, t: Throwable) {
-                if(t is IOException){
-                    Log.d("TAG", "IOException!")
-                }else if(t is RuntimeException){
-                    Log.d("TAG", "RuntimeException!")
-                }else{
-                    Log.d("TAG", "?????????")
-                }
-
-                Log.d("TAG", "실패2!")
-            }
-            override fun onResponse(call: Call<Route>, response: Response<Route>) {
-                if(response.isSuccessful) {
-                    Log.d("TAG", "시작!")
-                    Log.d("getData", "getData")
-                    Log.d("code", response.body()?.code)
-                }else{
-                    Log.d("TAG", "실패1!")
-                }
-            }
-        })
-        Log.d("TAG", "request 끝")
 
 
         // permissions
@@ -142,6 +106,19 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         uiSettings.isIndoorLevelPickerEnabled = true
         uiSettings.isZoomControlEnabled = true
 
+        val retro = RetroFitAPI()
+        retro.getRetroFitClient(37.562,126.974, 37.563, 126.9841)
+        Log.d("TAG", "retro 설정")
+
+        mModel = ViewModelProviders.of(this).get(RetroFitAPI::class.java)
+        mModel.routeList.observe(this, Observer<ArrayList<Pair<Double, Double>>>{route  ->
+            for((lat, long) in route) {
+                Log.d("TAG", "lat : ${lat}, long : ${long}")
+                val marker = Marker()
+                marker.position = LatLng(lat, long)
+                marker.map = naverMap
+            }
+        })
 
         // print 좌표 of a long clicked point, to set the place as Destination
         naverMap.setOnMapLongClickListener { _, coord ->
