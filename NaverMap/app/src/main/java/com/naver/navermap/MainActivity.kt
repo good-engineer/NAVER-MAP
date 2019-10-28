@@ -89,10 +89,22 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
         //callback 함수 설정
         retro.setListener {
-            for(point in it){
-                val marker = Marker().apply{
-                    position = LatLng(point.latitude, point.longitude)
-                    map = naverMap
+            if(it[0].code == "No Response"){
+                Toast.makeText(
+                    this, "No Response",
+                    Toast.LENGTH_SHORT
+                ).show()
+            }else if(it[0].code == "No Internet"){
+                Toast.makeText(
+                    this, "No Internet",
+                    Toast.LENGTH_SHORT
+                ).show()
+            }else{
+                for(point in it){
+                    val marker = Marker().apply{
+                        position = LatLng(point.latLng.latitude, point.latLng.longitude)
+                        map = naverMap
+                    }
                 }
             }
         }
