@@ -12,6 +12,7 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.naver.maps.map.LocationTrackingMode
 
+const val MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION =1
 
 class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var naverMap: NaverMap
