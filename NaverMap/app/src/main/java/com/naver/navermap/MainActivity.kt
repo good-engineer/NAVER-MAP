@@ -16,6 +16,7 @@ import com.naver.maps.map.overlay.Marker
 const val MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 1
 
 class MainActivity : AppCompatActivity(), OnMapReadyCallback {
+    val retro = RetroFitAPI()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -27,7 +28,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             ?: MapFragment.newInstance().also {
                 fm.beginTransaction().add(R.id.map_fragment, it).commit()
             }
-
         //search fragment
         fm.beginTransaction().add(R.id.container, SearchFragment()).commit()
         mapFragment.getMapAsync(this)
@@ -49,8 +49,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                 arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
                 MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION
             )
-
-
         }
     }
 
@@ -73,9 +71,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                     //granted get current location and show on the map
                 } else {
                     //denied
-
                 }
-
             }
         }
     }
@@ -84,19 +80,20 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     override fun onMapReady(naverMap: NaverMap) {
 
         // map fragment settings
-        val uiSettings = naverMap.uiSettings
-        uiSettings.isLocationButtonEnabled = true
-        uiSettings.isCompassEnabled = false
-        uiSettings.isIndoorLevelPickerEnabled = true
-        uiSettings.isZoomControlEnabled = true
+        val uiSettings = naverMap.uiSettings.apply{
+            isLocationButtonEnabled = true
+            isCompassEnabled = false
+            isIndoorLevelPickerEnabled = true
+            isZoomControlEnabled = true
+        }
 
-        //retrofit API 설정 및 callback 함수 설정
-        val retro = RetroFitAPI()
-        retro.setOnChangeLinstener {
-            for((lat, lng) in it){
-                val marker = Marker()
-                marker.position = LatLng(lat, lng)
-                marker.map = naverMap
+        //callback 함수 설정
+        retro.setListener {
+            for(point in it){
+                val marker = Marker().apply{
+                    position = LatLng(point.latitude, point.longitude)
+                    map = naverMap
+                }
             }
         }
         //dummy coordination
@@ -117,8 +114,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                 Toast.LENGTH_SHORT
             ).show()
         }
-
-
     }
 
 

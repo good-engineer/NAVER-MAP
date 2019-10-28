@@ -1,6 +1,6 @@
 package com.naver.navermap
 
-import android.util.Log
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import retrofit2.Call
 import retrofit2.Callback
@@ -9,39 +9,46 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
 class RetroFitAPI : Fragment() {
-    private lateinit var listener : (ArrayList<Pair<Double, Double>>) -> Unit
-    private lateinit var service : RetrofitService
-    var routeList = ArrayList<Pair<Double, Double>>()
+    private lateinit var listener : (List<coordination>) -> Unit
+    val service : RetrofitService
+
     init {
-        setRetroFit()
-    }
-    private fun setRetroFit(){
         val retrofit = Retrofit.Builder()
-            .baseUrl(getString(R.string.baseUrl))
+            .baseUrl("https://router.project-osrm.org")
             .addConverterFactory(GsonConverterFactory.create())
-            .build();
+            .build()
         service = retrofit.create(RetrofitService::class.java)
     }
-    private fun route2list(route : List<WaypointsData>?) : ArrayList<Pair<Double, Double>>{
-        val list = ArrayList<Pair<Double, Double>>()
-        route?.forEach {list.add(Pair(it.location[1], it.location[0]))}
-        return list
+    data class coordination(val latitude : Double, val longitude : Double)
+    private fun waypoint2coordination(route : List<WaypointsData>?) : List<coordination>{
+        return route?.map{it -> coordination(it.location[1], it.location[0])} ?: emptyList()
     }
-    fun setOnChangeLinstener(listener : (ArrayList<Pair<Double, Double>>) -> Unit){
+    fun setListener(listener : (List<coordination>) -> Unit){
         this.listener = listener
     }
-    public fun getRetroFitClient(startLat : Double, startLong : Double, endLat : Double, endLong : Double){
-        val response = service.requestRoute(coordinate = "${startLong},${startLat};${endLong},${endLat}", overview = false).enqueue(object :
+    public fun getRetroFitClient(startLat : Double, startLong : Double, endLat : Double, endLong : Double) {
+        service.requestRoute(coordinate = "${startLong},${startLat};${endLong},${endLat}", overview = false).enqueue(object :
             Callback<Route> {
             override fun onFailure(call: Call<Route>, t: Throwable) {
+                Toast.makeText(
+                    activity, "Check Internet",
+                    Toast.LENGTH_SHORT
+                ).show()
             }
             override fun onResponse(call: Call<Route>, response: Response<Route>) {
                 if(response.isSuccessful) {
-                    response.body()?.waypoints?.forEach { routeList.add(Pair(it.location[1], it.location[0])) }
-                    listener(routeList)
+                    /*Toast.makeText(
+                        activity, "Response",
+                        Toast.LENGTH_SHORT
+                    ).show()*/
+                    listener(waypoint2coordination(response.body()?.waypoints))
+                }else{
+                    Toast.makeText(
+                        activity, "Response error",
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
             }
         })
-        Log.d("TAG", "request 끝")
     }
 }
