@@ -2,13 +2,14 @@ package com.naver.navermap
 
 import com.naver.maps.geometry.LatLng
 import com.naver.navermap.data.Coordination
+import com.naver.navermap.data.RetroResult
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
-class RetroFitAPI {
+object RetroFitAPI {
     private lateinit var listener: (List<Coordination>) -> Unit
     private val BASE_URL = "https://router.project-osrm.org"
     val service: RetrofitService
@@ -25,7 +26,7 @@ class RetroFitAPI {
         this.listener = listener
     }
 
-    public fun getRetroFitClient(
+    fun getRetroFitClient(
         startLat: Double,
         startLong: Double,
         endLat: Double,
@@ -37,19 +38,19 @@ class RetroFitAPI {
         ).enqueue(object :
             Callback<Route> {
             override fun onFailure(call: Call<Route>, t: Throwable) {
-                listener(listOf(Coordination("No Internet", LatLng(0.0, 0.0))))
+                listener(listOf(Coordination(RetroResult.NoInternetError(t), LatLng(0.0, 0.0))))
             }
 
             override fun onResponse(call: Call<Route>, response: Response<Route>) {
                 if (response.isSuccessful) {
                     listener(response.body()?.waypoints?.map { it ->
                         Coordination(
-                            "ok",
+                            RetroResult.Success("OK"),
                             LatLng(it.location[1], it.location[0])
                         )
                     } ?: emptyList())
                 } else {
-                    listener(listOf(Coordination("No Response", LatLng(0.0, 0.0))))
+                    listener(listOf(Coordination(RetroResult.NoResponseError(null), LatLng(0.0, 0.0))))
                 }
 
             }

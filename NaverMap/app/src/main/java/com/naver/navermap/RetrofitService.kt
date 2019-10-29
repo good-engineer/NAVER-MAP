@@ -6,7 +6,8 @@ import retrofit2.http.Path
 import retrofit2.http.Query
 
 interface RetrofitService{
-    //http://router.project-osrm.org/
+    //http://router.project-osrm.org
+    //http options
     @GET("/route/v1/car/{coordinate}")
     fun requestRoute(
         @Path("coordinate") coordinate : String,

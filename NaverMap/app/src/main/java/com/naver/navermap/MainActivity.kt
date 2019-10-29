@@ -12,11 +12,11 @@ import com.naver.maps.map.MapFragment
 import com.naver.maps.map.NaverMap
 import com.naver.maps.map.OnMapReadyCallback
 import com.naver.maps.map.overlay.Marker
+import com.naver.navermap.data.RetroResult
 
 const val MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 1
 
 class MainActivity : AppCompatActivity(), OnMapReadyCallback {
-    lateinit var retro: RetroFitAPI
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -88,30 +88,34 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         }
 
         //callback 함수 설정
-        retro = RetroFitAPI().apply {
+        RetroFitAPI.apply {
             setListener {
-                if (it[0].code == "No Response") {
-                    Toast.makeText(
-                        this@MainActivity, "No Response",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                } else if (it[0].code == "No Internet") {
-                    Toast.makeText(
-                        this@MainActivity, "No Internet",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                } else {
-                    for (point in it) {
-                        val marker = Marker().apply {
-                            position = LatLng(point.latLng.latitude, point.latLng.longitude)
-                            map = naverMap
+                when (val res = it[0].result) {
+                    is RetroResult.NoInternetError -> {
+                        Toast.makeText(
+                            this@MainActivity, "No Internet",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                    is RetroResult.NoResponseError -> {
+                        Toast.makeText(
+                            this@MainActivity, "No Response",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                    is  RetroResult.Success -> {
+                        for (point in it) {
+                            val marker = Marker().apply {
+                                position = LatLng(point.latLng.latitude, point.latLng.longitude)
+                                map = naverMap
+                            }
                         }
                     }
                 }
             }
         }
         //dummy coordination
-        retro.getRetroFitClient(37.562, 126.974, 37.563, 126.9841)
+        RetroFitAPI.getRetroFitClient(37.562, 126.974, 37.563, 126.9841)
 
         // print 좌표 of a long clicked point, to set the place as Destination
         naverMap.setOnMapLongClickListener { _, coord ->
