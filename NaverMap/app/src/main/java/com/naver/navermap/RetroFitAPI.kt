@@ -9,10 +9,21 @@ import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
-object RetroFitAPI {
+class RetroFitAPI {
     private lateinit var listener: (List<Coordination>) -> Unit
     private val BASE_URL = "https://router.project-osrm.org"
     val service: RetrofitService
+
+    companion object {
+        @Volatile
+        private var INSTANCE: RetroFitAPI? = null
+
+        fun getInstance(): RetroFitAPI {
+            return INSTANCE ?: synchronized(this) {
+                RetroFitAPI().also { INSTANCE = it }
+            }
+        }
+    }
 
     init {
         val retrofit = Retrofit.Builder()
@@ -50,7 +61,14 @@ object RetroFitAPI {
                         )
                     } ?: emptyList())
                 } else {
-                    listener(listOf(Coordination(RetroResult.NoResponseError(null), LatLng(0.0, 0.0))))
+                    listener(
+                        listOf(
+                            Coordination(
+                                RetroResult.NoResponseError(null),
+                                LatLng(0.0, 0.0)
+                            )
+                        )
+                    )
                 }
 
             }

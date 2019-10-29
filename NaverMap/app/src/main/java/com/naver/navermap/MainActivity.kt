@@ -87,8 +87,9 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             isZoomControlEnabled = true
         }
 
+        val retro = RetroFitAPI.getInstance()
         //callback 함수 설정
-        RetroFitAPI.apply {
+        retro.apply {
             setListener {
                 when (val res = it[0].result) {
                     is RetroResult.NoInternetError -> {
@@ -103,7 +104,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                             Toast.LENGTH_SHORT
                         ).show()
                     }
-                    is  RetroResult.Success -> {
+                    is RetroResult.Success -> {
                         for (point in it) {
                             val marker = Marker().apply {
                                 position = LatLng(point.latLng.latitude, point.latLng.longitude)
@@ -115,7 +116,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             }
         }
         //dummy coordination
-        RetroFitAPI.getRetroFitClient(37.562, 126.974, 37.563, 126.9841)
+        retro.getRetroFitClient(37.562, 126.974, 37.563, 126.9841)
 
         // print 좌표 of a long clicked point, to set the place as Destination
         naverMap.setOnMapLongClickListener { _, coord ->
