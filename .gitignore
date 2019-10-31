@@ -1,5 +1,7 @@
 # https://github.com/github/gitignore/blob/master/Android.gitignore
 
+# road data
+*.jason
 # API Key
 *.gradle.properties
 
