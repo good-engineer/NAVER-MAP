@@ -8,6 +8,7 @@ package com.naver.navermap
 5. update state
 
 */
-class Viterbi {
 
+class Viterbi {
+ //TODO: 
 }
