@@ -116,6 +116,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                     }
                 }
             }
+            setContext(applicationContext)
         }
         //dummy coordination
         retro.getRetroFitClient(37.5586, 126.9781, 37.5701525, 126.98304)
