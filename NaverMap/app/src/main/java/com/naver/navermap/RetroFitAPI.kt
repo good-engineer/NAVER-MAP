@@ -54,10 +54,10 @@ class RetroFitAPI {
 
             override fun onResponse(call: Call<Route>, response: Response<Route>) {
                 if (response.isSuccessful) {
-                    listener(response.body()?.waypoints?.map { it ->
+                    listener(response.body()!!.routes[0].legs[0].steps.map { it ->
                         Coordination(
                             RetroResult.Success("OK"),
-                            LatLng(it.location[1], it.location[0])
+                            LatLng(it.maneuver.location[1], it.maneuver.location[0])
                         )
                     } ?: emptyList())
                 } else {

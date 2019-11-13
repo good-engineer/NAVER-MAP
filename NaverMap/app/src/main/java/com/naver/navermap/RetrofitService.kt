@@ -12,7 +12,7 @@ interface RetrofitService{
     fun requestRoute(
         @Path("coordinate") coordinate : String,
         //@Query("alternative") alternative : Boolean = false,
-        //@Query("steps") steps : Boolean = false,
+        @Query("steps") steps : Boolean = true,
         //@Query("annotation") annotation : Boolean = false,
         //@Query("geometries") geometries : String = "polyline",
         @Query("overview") overview : Boolean = false
