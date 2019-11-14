@@ -11,8 +11,11 @@ import com.naver.maps.geometry.LatLng
 import com.naver.maps.map.*
 import com.naver.maps.map.util.FusedLocationSource
 
+
 class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var locationSource: FusedLocationSource
+    val LOCATION_PERMISSION_REQUEST_CODE = 1000
+    var mLocationPermissionGranted = false
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -32,29 +35,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     }
 
 
-    private fun checkPermission() {
 
-        //check if permission is granted
-        if (ContextCompat.checkSelfPermission(
-                this,
-                Manifest.permission.ACCESS_FINE_LOCATION
-            )
-            != PackageManager.PERMISSION_GRANTED
-            && ContextCompat.checkSelfPermission(
-                this,
-                Manifest.permission.ACCESS_COARSE_LOCATION
-            )
-            != PackageManager.PERMISSION_GRANTED
-        ) {
-            // Permission is not granted, so request
-            ActivityCompat.requestPermissions(
-                this,
-                PERMISSIONS,
-                REQUEST
-            )
-
-        }
-    }
 
     override fun onRequestPermissionsResult(
         requestCode: Int,
@@ -67,10 +48,10 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             )
         ) {
             mLocationPermissionGranted = true
-            Toast.makeText(this, "Permission Granted!", Toast.LENGTH_LONG)
+            Toast.makeText(this, "Permission Granted!", Toast.LENGTH_LONG).show()
             return
         }
-        Toast.makeText(this, "Permission Denied!", Toast.LENGTH_LONG)
+        Toast.makeText(this, "Permission Denied!", Toast.LENGTH_LONG).show()
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
 
 
@@ -91,7 +72,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
         val locationOverlay = naverMap.locationOverlay
 
-        if (mLocationPermissionGranted) {  //TODO: Permission is not checked
+        if (mLocationPermissionGranted) {
             naverMap.uiSettings.isLocationButtonEnabled = true
             //locationOverlay.isVisible = true
         }
@@ -119,17 +100,33 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         }
     }
 
-    companion object {
-        private const val LOCATION_PERMISSION_REQUEST_CODE = 1000
-        var mLocationPermissionGranted = false
-        const val REQUEST = 1
-        private val PERMISSIONS = arrayOf(
-            Manifest.permission.ACCESS_FINE_LOCATION,
-            Manifest.permission.ACCESS_COARSE_LOCATION
-        )
-
-    }
 
 
 }
+
+//to use source location instead of fusedlocation
+
+/*private fun checkPermission() {
+
+     //check if permission is granted
+     if (ContextCompat.checkSelfPermission(
+             this,
+             Manifest.permission.ACCESS_FINE_LOCATION
+         )
+         != PackageManager.PERMISSION_GRANTED
+         && ContextCompat.checkSelfPermission(
+             this,
+             Manifest.permission.ACCESS_COARSE_LOCATION
+         )
+         != PackageManager.PERMISSION_GRANTED
+     ) {
+         // Permission is not granted, so request
+         ActivityCompat.requestPermissions(
+             this,
+             PERMISSIONS,
+             REQUEST
+         )
+
+     }
+ }*/
 
