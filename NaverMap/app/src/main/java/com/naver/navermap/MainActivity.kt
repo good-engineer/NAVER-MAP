@@ -4,19 +4,23 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.Manifest
 import android.widget.Toast
-import com.naver.maps.map.MapFragment
-import com.naver.maps.map.NaverMap
-import com.naver.maps.map.OnMapReadyCallback
 import android.content.pm.PackageManager
+import android.content.res.AssetManager
+import android.graphics.Color
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import com.naver.maps.geometry.LatLng
+import com.naver.maps.geometry.LatLngBounds
+import com.naver.maps.map.*
+import com.naver.maps.map.overlay.PathOverlay
+import org.json.JSONArray
+import org.json.JSONObject
+import java.io.InputStream
 
 
 const val MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 1
 
 class MainActivity : AppCompatActivity(), OnMapReadyCallback {
-    private lateinit var naverMap: NaverMap
-
 
     override fun onCreate(savedInstanceState: Bundle?) {
 
@@ -37,7 +41,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
         // permissions
         checkPermission()
-
 
 
     }
@@ -76,10 +79,9 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         when (requestCode) {
             MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION -> {
                 if ((grantResults.isNotEmpty() && grantResults[0]
-                            == PackageManager.PERMISSION_GRANTED))
-                {
+                            == PackageManager.PERMISSION_GRANTED)
+                ) {
                     //granted get current location and show on the map
-
 
 
                 } else {
@@ -93,7 +95,8 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
 
     override fun onMapReady(naverMap: NaverMap) {
-
+        //map camera bound
+        naverMap.extent = LatLngBounds(LatLng(37.4460, 126.933), LatLng(37.475, 126.982))
 
         // map fragment settings
         val uiSettings = naverMap.uiSettings
@@ -119,6 +122,29 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             ).show()
         }
 
+
+        val assetManager: AssetManager = resources.assets
+        var inputStream: InputStream = assetManager.open("sample.json")
+        val jsonString = inputStream.bufferedReader().use { it.readText() }
+        val jArray = JSONArray(jsonString)
+        for(i in 0 until jArray.length()){
+            val road = jArray.getJSONObject(i)
+            val seqNum = road.getString("sequence")
+            val pathPoints = road.getJSONArray("pathPoints")
+            var coordList = mutableListOf<LatLng>()
+            for(j in 0 until pathPoints.length()){
+                val pathPoint = pathPoints.getJSONArray(j)
+                val longitude:Double = pathPoint.optDouble(0)
+                val latitude = pathPoint.optDouble(1)
+                coordList.add(LatLng(latitude, longitude))
+
+            }
+            PathOverlay().apply {
+                coords = coordList
+                map = naverMap
+                color = Color.GREEN
+            }
+        }
 
     }
 

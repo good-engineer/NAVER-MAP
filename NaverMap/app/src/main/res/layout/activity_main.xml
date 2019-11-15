@@ -11,6 +11,8 @@
         android:name="com.naver.maps.map.MapFragment"
         android:layout_width="0dp"
         android:layout_height="0dp"
+        app:navermap_latitude="37.4590"
+        app:navermap_longitude="126.952"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
