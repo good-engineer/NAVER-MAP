@@ -6,7 +6,7 @@ import com.naver.maps.geometry.LatLng
 data class RoadState(
     val startPoint: LatLng,
     val endPoint: LatLng,
-    val length: Int
+    val distance: Double
 )
 
 

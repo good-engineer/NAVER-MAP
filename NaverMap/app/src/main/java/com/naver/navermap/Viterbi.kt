@@ -1,6 +1,10 @@
 package com.naver.navermap
 
+import android.content.res.AssetManager
 import com.naver.maps.geometry.LatLng
+import com.naver.maps.geometry.LatLngBounds
+import org.json.JSONArray
+import java.io.InputStream
 import kotlin.math.*
 
 //TODO
@@ -76,31 +80,94 @@ fun cartToLatLng(coord: Coordination): LatLng {
     return (LatLng(lat, lon))
 }
 
+fun pointToLineProject(road: RoadState, location: LatLng): LatLng {
+    val southWest: LatLng =
+        LatLng(
+            min(road.startPoint.latitude, road.endPoint.latitude),
+            min(road.startPoint.longitude, road.endPoint.longitude)
+        )
+    val northEast: LatLng =
+        LatLng(
+            max(road.startPoint.latitude, road.endPoint.latitude),
+            max(road.startPoint.longitude, road.endPoint.longitude)
+        )
+    val bound: LatLngBounds = LatLngBounds(southWest, northEast)
+    val point = cartToLatLng(
+        cardProject(
+            latLngToCart(road.startPoint),
+            latLngToCart(road.endPoint),
+            latLngToCart(location)
+        )
+    )
 
-class Viterbi {
+    if (bound.contains(point))
+        return point
+    else {
+        return if (road.startPoint.distanceTo(point) < road.endPoint.distanceTo(point)) road.startPoint else road.endPoint
+    }
+}
+
+class Viterbi(jsonString: String) {
+    var prevLocation: LatLng? = null
+    var currLocation: LatLng? = null
+    var prevStates: List<Pair<RoadState, Double>>? = null
+    var currStates: List<Pair<RoadState, Double>>? = null
+    lateinit var roadMap: Map<Int, RoadState>
+
     companion object {
         private const val BETA = 6.0
         private const val SIGMAZ = 10.0
     }
 
-    var prevLocation: LatLng? = null
-    var currLocation: LatLng? = null
-    var prevStates: List<Pair<RoadState, Double>>? = null
-    var currStates: List<Pair<RoadState, Double>>? = null
+    init {
+        val tmpMap: MutableMap<Int, RoadState> = mutableMapOf()
+        val jArray = JSONArray(jsonString)
+        for (i in 0 until jArray.length()) {
+            val road = jArray.getJSONObject(i)
+            val seqNum = road.getInt("sequence")
+            val distance = road.getInt("distance")
+            val pathPoints = road.getJSONArray("pathPoints")
+            var lastlocation: LatLng = LatLng(0.0, 0.0)
+            for (j in 0 until pathPoints.length()) {
+                val pathPoint = pathPoints.getJSONArray(j)
+                val location = LatLng(pathPoint.optDouble(1), pathPoint.optDouble(0))
+                if (j != 0) {
+                    tmpMap.put(
+                        seqNum * 10 + (j - 1),
+                        RoadState(lastlocation, location, lastlocation.distanceTo(location))
+                    )
+                }
+                lastlocation = location
+            }
+        }
+        roadMap = tmpMap
+    }
+
     fun getEmissionProb(road: RoadState, location: LatLng): Double {
-        TODO("get emission probability")
+        val C = 1 / (sqrt(2 * PI) * SIGMAZ)
+        val roadLocation = getRoadLocation(road, location)
+        val distance = location.distanceTo(roadLocation)
+        return C * exp(-0.5 * (distance / SIGMAZ) * (distance / SIGMAZ))
     }
 
     fun getTransitionProb(from: RoadState, to: RoadState): Double {
         TODO("get transition probability form road to to road")
     }
 
-    fun getCandidate(location: LatLng): List<RoadState>? {
-        TODO("get candidate road in 200m")
+    //get candidate location in 200m
+    fun getCandidate(location: LatLng): List<RoadState> {
+        val res: MutableList<RoadState> = mutableListOf()
+        for ((seq, road) in roadMap) {
+            if (location.distanceTo(road.startPoint) < 200 ||
+                location.distanceTo(road.endPoint) < 200
+            )
+                res.add(road)
+        }
+        return res
     }
 
     fun getRoadLocation(road: RoadState, location: LatLng): LatLng {
-        return cartToLatLng(cardProject(latLngToCart(road.startPoint), latLngToCart(road.endPoint), latLngToCart(location)))
+        return pointToLineProject(road, location)
     }
 
     fun getMapMatchingLocation(location: LatLng): LatLng {
@@ -108,7 +175,7 @@ class Viterbi {
         prevLocation = currLocation
         val currCandidates = getCandidate(location)
         var currRoad: RoadState? = null
-        currStates = currCandidates?.map { currCand ->
+        currStates = currCandidates.map { currCand ->
             prevStates?.let { prevStates ->
                 var maxProb = 0.0
                 for ((prevRoad, prevProb) in prevStates) {
