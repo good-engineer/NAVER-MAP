@@ -180,7 +180,7 @@ class Viterbi(jsonString: String) {
             if (from == to) {
                 addAll(currCandidates!!)
                 remove(from)
-                add(
+                if (prevRoadLocation != currRoadLocation) add(
                     RoadState(
                         prevRoadLocation,
                         currRoadLocation,
@@ -188,14 +188,14 @@ class Viterbi(jsonString: String) {
                     )
                 )
                 if (prevRoadLocation.distanceTo(from.startPoint) > currRoadLocation.distanceTo(from.startPoint)) {
-                    add(
+                    if (from.startPoint != currRoadLocation) add(
                         RoadState(
                             from.startPoint,
                             currRoadLocation,
                             from.startPoint.distanceTo(currRoadLocation)
                         )
                     )
-                    add(
+                    if (from.endPoint != prevRoadLocation) add(
                         RoadState(
                             from.endPoint,
                             prevRoadLocation,
@@ -203,14 +203,14 @@ class Viterbi(jsonString: String) {
                         )
                     )
                 } else {
-                    add(
+                    if (from.startPoint != prevRoadLocation) add(
                         RoadState(
                             from.startPoint,
                             prevRoadLocation,
                             from.startPoint.distanceTo(prevRoadLocation)
                         )
                     )
-                    add(
+                    if (from.endPoint != currRoadLocation) add(
                         RoadState(
                             from.endPoint,
                             currRoadLocation,
@@ -222,28 +222,28 @@ class Viterbi(jsonString: String) {
                 addAll(currCandidates!!)
                 remove(from)
                 remove(to)
-                add(
+                if (from.startPoint != prevRoadLocation) add(
                     RoadState(
                         from.startPoint,
                         prevRoadLocation,
                         from.startPoint.distanceTo(prevRoadLocation)
                     )
                 )
-                add(
+                if (from.endPoint != prevRoadLocation) add(
                     RoadState(
                         from.endPoint,
                         prevRoadLocation,
                         from.endPoint.distanceTo(prevRoadLocation)
                     )
                 )
-                add(
+                if (from.startPoint != currRoadLocation) add(
                     RoadState(
                         to.startPoint,
                         currRoadLocation,
                         to.startPoint.distanceTo(currRoadLocation)
                     )
                 )
-                add(
+                if (from.endPoint != currRoadLocation) add(
                     RoadState(
                         to.endPoint,
                         currRoadLocation,
