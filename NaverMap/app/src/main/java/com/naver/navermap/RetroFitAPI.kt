@@ -1,5 +1,6 @@
 package com.naver.navermap
 
+import android.content.Context
 import com.naver.maps.geometry.LatLng
 import com.naver.navermap.data.Coordination
 import com.naver.navermap.data.RetroResult
@@ -11,7 +12,7 @@ import retrofit2.converter.gson.GsonConverterFactory
 
 class RetroFitAPI {
     private lateinit var listener: (List<Coordination>) -> Unit
-    private val BASE_URL = "https://router.project-osrm.org"
+    private lateinit var context: Context
     val service: RetrofitService
 
     companion object {
@@ -27,7 +28,7 @@ class RetroFitAPI {
 
     init {
         val retrofit = Retrofit.Builder()
-            .baseUrl(BASE_URL)
+            .baseUrl(context.getString(R.string.osrm_url))
             .addConverterFactory(GsonConverterFactory.create())
             .build()
         service = retrofit.create(RetrofitService::class.java)
@@ -35,6 +36,10 @@ class RetroFitAPI {
 
     fun setListener(listener: (List<Coordination>) -> Unit) {
         this.listener = listener
+    }
+
+    fun setContext(context: Context){
+        this.context = context
     }
 
     fun getRetroFitClient(
@@ -54,11 +59,13 @@ class RetroFitAPI {
 
             override fun onResponse(call: Call<Route>, response: Response<Route>) {
                 if (response.isSuccessful) {
-                    listener(response.body()?.waypoints?.map { it ->
-                        Coordination(
-                            RetroResult.Success("OK"),
-                            LatLng(it.location[1], it.location[0])
-                        )
+                    listener(response.body()?.let {
+                        it.routes[0].legs[0].steps.map { it ->
+                            Coordination(
+                                RetroResult.Success(context.getString(R.string.retrofit_success)),
+                                LatLng(it.maneuver.location[1], it.maneuver.location[0])
+                            )
+                        }
                     } ?: emptyList())
                 } else {
                     listener(

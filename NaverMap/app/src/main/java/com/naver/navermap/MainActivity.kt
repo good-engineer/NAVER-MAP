@@ -2,6 +2,7 @@ package com.naver.navermap
 
 import android.Manifest
 import android.content.pm.PackageManager
+import android.graphics.Color
 import android.os.Bundle
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -11,7 +12,7 @@ import com.naver.maps.geometry.LatLng
 import com.naver.maps.map.MapFragment
 import com.naver.maps.map.NaverMap
 import com.naver.maps.map.OnMapReadyCallback
-import com.naver.maps.map.overlay.Marker
+import com.naver.maps.map.overlay.PathOverlay
 import com.naver.navermap.data.RetroResult
 
 const val MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 1
@@ -105,18 +106,20 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                         ).show()
                     }
                     is RetroResult.Success -> {
-                        for (point in it) {
-                            val marker = Marker().apply {
-                                position = LatLng(point.latLng.latitude, point.latLng.longitude)
-                                map = naverMap
+                        val path = PathOverlay().apply {
+                            coords = it.map {
+                                LatLng(it.latLng.latitude, it.latLng.longitude)
                             }
+                            map = naverMap
+                            color = Color.RED
                         }
                     }
                 }
             }
+            setContext(applicationContext)
         }
         //dummy coordination
-        retro.getRetroFitClient(37.562, 126.974, 37.563, 126.9841)
+        retro.getRetroFitClient(37.5586, 126.9781, 37.5701525, 126.98304)
 
         // print 좌표 of a long clicked point, to set the place as Destination
         naverMap.setOnMapLongClickListener { _, coord ->
