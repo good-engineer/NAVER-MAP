@@ -98,7 +98,7 @@ class Viterbi(jsonString: String) {
     //roadstate, viterbi probability
     var prevStates: List<Pair<RoadState, Double>>? = null
     var currStates: List<Pair<RoadState, Double>>? = null
-    lateinit var roadMap: Map<Int, RoadState>
+    val roadMap: Map<Int, RoadState>
 
     companion object {
         private const val INF: Int = 0x3F3F3F3F
@@ -257,7 +257,8 @@ class Viterbi(jsonString: String) {
         dijkstra(prevRoadLocation, adj)
         val minDist = dist[currRoadLocation]
         val greatCircle = prevRoadLocation.distanceTo(currRoadLocation)
-        val prob = if(minDist == INF) 0.0 else 1.0 / BETA * exp(-abs(minDist!!.toDouble() - greatCircle) / BETA)
+        val prob =
+            if (minDist == INF) 0.0 else 1.0 / BETA * exp(-abs(minDist!!.toDouble() - greatCircle) / BETA)
         return prob
     }
 
@@ -296,10 +297,12 @@ class Viterbi(jsonString: String) {
     fun getMapMatchingLocation(location: LatLng): LatLng {
         prevStates = currStates
         prevLocation = currLocation
+        currLocation = location
         prevCandidates = currCandidates
         currCandidates = getCandidate(location)
         var currRoad: RoadState? = null
-        currStates = currCandidates.map { currCand ->
+
+        currStates = currCandidates?.map { currCand ->
             prevStates?.let { prevStates ->
                 var maxProb = 0.0
                 for ((prevRoad, prevProb) in prevStates) {
@@ -313,9 +316,18 @@ class Viterbi(jsonString: String) {
                     }
                 }
                 Pair(currCand, maxProb)
-            } ?: Pair(currCand, 0.0)
+            } ?: Pair(currCand, getEmissionProb(currCand, location))
+        } ?: return location
+
+        var probSum = 0.0
+        currStates?.let { currStates ->
+            for ((_, prob) in currStates) {
+                probSum = probSum + prob
+            }
         }
-        currLocation = location
+        //normalization & remove prob < 2.0%
+        currStates =
+            currStates?.map { Pair(it.first, it.second / probSum) }?.filter { it.second > 0.02 }
         currStates?.let { currStates ->
             var maxProb = 0.0
             for ((road, prob) in currStates) {
@@ -325,7 +337,7 @@ class Viterbi(jsonString: String) {
                 }
             }
         }
-        return currRoad?.let { getRoadLocation(it, location) } ?: LatLng(0.0, 0.0)
+        return currRoad?.let { getRoadLocation(it, location) } ?: location
 
     }
 }
