@@ -2,11 +2,7 @@ package com.naver.navermap
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.Manifest
 import android.widget.Toast
-import android.content.pm.PackageManager
-import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
 import com.naver.maps.geometry.LatLng
 import com.naver.maps.map.*
 import com.naver.maps.map.util.FusedLocationSource
@@ -104,7 +100,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
 }
 
-//to use source location instead of fusedlocation
+//to use source location
 
 /*private fun checkPermission() {
 
