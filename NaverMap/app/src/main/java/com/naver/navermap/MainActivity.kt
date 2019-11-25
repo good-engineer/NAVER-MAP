@@ -14,10 +14,14 @@ import com.naver.maps.map.NaverMap
 import com.naver.maps.map.OnMapReadyCallback
 import com.naver.maps.map.overlay.PathOverlay
 import com.naver.navermap.data.RetroResult
+import com.naver.maps.map.*
+import com.naver.maps.map.util.FusedLocationSource
 
-const val MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 1
 
 class MainActivity : AppCompatActivity(), OnMapReadyCallback {
+    private lateinit var locationSource: FusedLocationSource
+    val LOCATION_PERMISSION_REQUEST_CODE = 1000
+    var mLocationPermissionGranted = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -32,53 +36,36 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         //search fragment
         fm.beginTransaction().add(R.id.container, SearchFragment()).commit()
         mapFragment.getMapAsync(this)
-        // permissions
-        checkPermission()
+        locationSource = FusedLocationSource(this, LOCATION_PERMISSION_REQUEST_CODE)
     }
 
-    fun checkPermission() {
-        //check if permission is granted
-        if (ContextCompat.checkSelfPermission(
-                this,
-                Manifest.permission.ACCESS_FINE_LOCATION
-            )
-            != PackageManager.PERMISSION_GRANTED
-        ) {
-            // Permission is not granted so request
-            ActivityCompat.requestPermissions(
-                this,
-                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
-                MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION
-            )
-        }
-    }
+
+
 
     override fun onRequestPermissionsResult(
         requestCode: Int,
         permissions: Array<String>,
         grantResults: IntArray
     ) {
-        super
-            .onRequestPermissionsResult(
-                requestCode,
-                permissions,
+        if (locationSource.onRequestPermissionsResult(
+                requestCode, permissions,
                 grantResults
             )
-        when (requestCode) {
-            MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION -> {
-                if ((grantResults.isNotEmpty() && grantResults[0]
-                            == PackageManager.PERMISSION_GRANTED)
-                ) {
-                    //granted get current location and show on the map
-                } else {
-                    //denied
-                }
-            }
+        ) {
+            mLocationPermissionGranted = true
+            Toast.makeText(this, "Permission Granted!", Toast.LENGTH_LONG).show()
+            return
         }
+        Toast.makeText(this, "Permission Denied!", Toast.LENGTH_LONG).show()
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+
+
     }
 
 
     override fun onMapReady(naverMap: NaverMap) {
+
+        naverMap.locationSource = locationSource
 
         // map fragment settings
         val uiSettings = naverMap.uiSettings.apply {
@@ -127,17 +114,63 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                 this, "${coord.latitude}, ${coord.longitude}",
                 Toast.LENGTH_SHORT
             ).show()
+        val locationOverlay = naverMap.locationOverlay
+
+        if (mLocationPermissionGranted) {
+            naverMap.uiSettings.isLocationButtonEnabled = true
+            //locationOverlay.isVisible = true
         }
 
+
+        naverMap.locationTrackingMode = LocationTrackingMode.Face
+
         // print location if location change happens
+        //TODO: algorithm > compare current position to road data
+        // TODO: Show new position
         naverMap.addOnLocationChangeListener { location ->
+            locationOverlay.apply {
+                position = LatLng(location.latitude, location.longitude)
+
+            }
+        }
+
+        // print 좌표 of a long clicked point, to set the place as Destination
+        //TODO: set as destination
+        naverMap.setOnMapLongClickListener { _, coord ->
             Toast.makeText(
-                this, "${location.latitude}, ${location.longitude}",
+                this, "${coord.latitude}, ${coord.longitude}",
                 Toast.LENGTH_SHORT
             ).show()
         }
     }
 
 
+
 }
+
+//to use source location
+
+/*private fun checkPermission() {
+
+     //check if permission is granted
+     if (ContextCompat.checkSelfPermission(
+             this,
+             Manifest.permission.ACCESS_FINE_LOCATION
+         )
+         != PackageManager.PERMISSION_GRANTED
+         && ContextCompat.checkSelfPermission(
+             this,
+             Manifest.permission.ACCESS_COARSE_LOCATION
+         )
+         != PackageManager.PERMISSION_GRANTED
+     ) {
+         // Permission is not granted, so request
+         ActivityCompat.requestPermissions(
+             this,
+             PERMISSIONS,
+             REQUEST
+         )
+
+     }
+ }*/
 
