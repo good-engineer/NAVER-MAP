@@ -1,10 +1,12 @@
 package com.naver.navermap
 
+import android.location.Location
 import com.naver.maps.geometry.LatLng
 import com.naver.maps.geometry.LatLngBounds
 import org.json.JSONArray
 import java.util.*
 import kotlin.math.*
+
 
 //TODO
 /*implement viterbi algorithm
@@ -93,6 +95,9 @@ fun pointToLineProject(road: RoadState, location: LatLng): LatLng {
 class Viterbi(jsonString: String) {
     var prevLocation: LatLng? = null
     var currLocation: LatLng? = null
+    var currSpeed: Float = 0.0f
+    var currTime: Long = 0
+
     var prevCandidates: List<RoadState>? = null
     var currCandidates: List<RoadState>? = null
     //roadstate, viterbi probability
@@ -138,6 +143,7 @@ class Viterbi(jsonString: String) {
     }
 
     fun getTransitionProb(from: RoadState, to: RoadState): Double {
+
         val prevRoadLocation = getRoadLocation(from, prevLocation!!)
         val currRoadLocation = getRoadLocation(to, currLocation!!)
         val dist: MutableMap<LatLng, Int> = mutableMapOf()
@@ -294,13 +300,70 @@ class Viterbi(jsonString: String) {
         }
     }
 
-    fun getMapMatchingLocation(location: LatLng): LatLng {
-        prevStates = currStates
-        prevLocation = currLocation
-        currLocation = location
-        prevCandidates = currCandidates
-        currCandidates = getCandidate(location)
+    fun isNotValid(location: Location , count:Int): Int {
+        // counter :the number of false location
+        var counter : Int = count
+        // position of location in LatLng type
+        val pos = LatLng(location.latitude, location.longitude)
+        // t : time difference
+        val t: Double = (location.time - currTime).toDouble() / 1000.0
+        // a : acceleration
+        val a: Double = ((location.speed - currSpeed) / t)
+        // x : predicted distance of new location to old location
+        val x: Double = (0.5 * a * t.pow(2)) + (t * currSpeed)
+
+        // d : distance from currlocation to new coming location
+        val d: Double? = currLocation?.let { pos.distanceTo(it) }
+        if (location.hasAccuracy())
+            if (d != null) {
+                //according to new location's accuracy and predicted distance x
+                // if the new location is too far so the location is not valid
+                // set a counter
+                if (d > ((2 * location.accuracy) + x)) {
+
+                    counter += 1
+                }
+            }
+        return counter
+    }
+
+    fun getMapMatchingLocation(inputLocation: Location): LatLng {
+        // counter :the number of false location
+        var counter: Int =0
         var currRoad: RoadState? = null
+        var location = LatLng(inputLocation.latitude, inputLocation.longitude)
+
+        if (inputLocation.hasAccuracy() && inputLocation.hasSpeed()) {
+            //check if location in valid
+            counter = (isNotValid(location = inputLocation, count = counter))
+            if (counter != 0) {
+                if (counter < 3) {
+                    // TODO: return currlocation
+
+
+                } else {
+                    //TODO: change location as it is the first location independent of prev states
+                }
+            }
+        }
+
+        if (currLocation == null) {
+            // TODo: In case of first location
+
+            currSpeed = inputLocation.speed
+            currLocation = location
+            currCandidates = getCandidate(location)
+
+        } else {
+
+            currSpeed = inputLocation.speed
+            currTime = inputLocation.time
+            prevStates = currStates
+            prevLocation = currLocation
+            currLocation = location
+            prevCandidates = currCandidates
+            currCandidates = getCandidate(location)
+        }
 
         currStates = currCandidates?.map { currCand ->
             prevStates?.let { prevStates ->
@@ -338,6 +401,8 @@ class Viterbi(jsonString: String) {
             }
         }
         return currRoad?.let { getRoadLocation(it, location) } ?: location
+        //currLocation=currRoad?.let { getRoadLocation(it, location )} ?: location
+        //return currLocation as LatLng
 
     }
 }
