@@ -401,8 +401,7 @@ class Viterbi(jsonString: String) {
             }
         }
         return currRoad?.let { getRoadLocation(it, location) } ?: location
-        //currLocation=currRoad?.let { getRoadLocation(it, location )} ?: location
-        //return currLocation as LatLng
+        
 
     }
 }
