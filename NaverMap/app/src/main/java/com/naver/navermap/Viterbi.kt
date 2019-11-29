@@ -4,6 +4,7 @@ import android.location.Location
 import com.naver.maps.geometry.LatLng
 import com.naver.maps.geometry.LatLngBounds
 import org.json.JSONArray
+import java.sql.Time
 import java.util.*
 import kotlin.math.*
 
@@ -20,6 +21,12 @@ import kotlin.math.*
 
 data class Coordination(
     val x: Double, val y: Double, val z: Double
+)
+
+data class TimeStep(
+    val location: LatLng,
+    val candidates: List<RoadState>,
+    val states: List<Pair<RoadState, Double>>
 )
 
 fun dot(coord1: Coordination, coord2: Coordination): Double {
@@ -93,18 +100,12 @@ fun pointToLineProject(road: RoadState, location: LatLng): LatLng {
 }
 
 class Viterbi(jsonString: String) {
-    var prevLocation: LatLng? = null
-    var currLocation: LatLng? = null
-    var currSpeed: Float = 0.0f
-    var currTime: Long = 0
-    var counter: Int = 0
-
-    var prevCandidates: List<RoadState>? = null
-    var currCandidates: List<RoadState>? = null
-    //roadstate, viterbi probability
-    var prevStates: List<Pair<RoadState, Double>>? = null
-    var currStates: List<Pair<RoadState, Double>>? = null
-    val roadMap: Map<Int, RoadState>
+    private var prevStep: TimeStep? = null
+    private var currStep: TimeStep? = null
+    private var currSpeed: Float = 0.0f
+    private var currTime: Long = 0
+    private var counter: Int = 0
+    private val roadMap: Map<Int, RoadState>
 
     companion object {
         private const val INF: Int = 0x3F3F3F3F
@@ -120,33 +121,31 @@ class Viterbi(jsonString: String) {
             val seqNum = road.getInt("sequence")
             val distance = road.getInt("distance")
             val pathPoints = road.getJSONArray("pathPoints")
-            var lastlocation: LatLng = LatLng(0.0, 0.0)
+            var lastLocation = LatLng(0.0, 0.0)
             for (j in 0 until pathPoints.length()) {
                 val pathPoint = pathPoints.getJSONArray(j)
                 val location = LatLng(pathPoint.optDouble(1), pathPoint.optDouble(0))
                 if (j != 0) {
-                    tmpMap.put(
-                        seqNum * 10 + (j - 1),
-                        RoadState(lastlocation, location, lastlocation.distanceTo(location))
-                    )
+                    tmpMap[seqNum * 10 + (j - 1)] =
+                        RoadState(lastLocation, location, lastLocation.distanceTo(location))
                 }
-                lastlocation = location
+                lastLocation = location
             }
         }
         roadMap = tmpMap
     }
 
-    fun getEmissionProb(road: RoadState, location: LatLng): Double {
+    private fun getEmissionProb(road: RoadState, location: LatLng): Double {
         val C = 1 / (sqrt(2 * PI) * SIGMAZ)
         val roadLocation = getRoadLocation(road, location)
         val distance = location.distanceTo(roadLocation)
         return C * exp(-0.5 * (distance / SIGMAZ) * (distance / SIGMAZ))
     }
 
-    fun getTransitionProb(from: RoadState, to: RoadState): Double {
+    private fun getTransitionProb(from: RoadState, to: RoadState): Double {
 
-        val prevRoadLocation = getRoadLocation(from, prevLocation!!)
-        val currRoadLocation = getRoadLocation(to, currLocation!!)
+        val prevRoadLocation = getRoadLocation(from, prevStep!!.location)
+        val currRoadLocation = getRoadLocation(to, currStep!!.location)
         val dist: MutableMap<LatLng, Int> = mutableMapOf()
 
         fun makeAdj(roadList: List<RoadState>): Map<LatLng, MutableList<Pair<LatLng, Int>>> {
@@ -183,9 +182,9 @@ class Viterbi(jsonString: String) {
             }
         }
 
-        var roadList: List<RoadState> = prevCandidates!!.toMutableList().apply {
+        val roadList: List<RoadState> = prevStep!!.candidates.toMutableList().apply {
             if (from == to) {
-                addAll(currCandidates!!)
+                addAll(currStep!!.candidates)
                 remove(from)
                 if (prevRoadLocation != currRoadLocation) add(
                     RoadState(
@@ -226,39 +225,47 @@ class Viterbi(jsonString: String) {
                     )
                 }
             } else {
-                addAll(currCandidates!!)
+                addAll(currStep!!.candidates)
                 remove(from)
                 remove(to)
-                if (from.startPoint != prevRoadLocation) add(
-                    RoadState(
-                        from.startPoint,
-                        prevRoadLocation,
-                        from.startPoint.distanceTo(prevRoadLocation)
+                if (from.startPoint != prevRoadLocation) {
+                    add(
+                        RoadState(
+                            from.startPoint,
+                            prevRoadLocation,
+                            from.startPoint.distanceTo(prevRoadLocation)
+                        )
                     )
-                )
-                if (from.endPoint != prevRoadLocation) add(
-                    RoadState(
-                        from.endPoint,
-                        prevRoadLocation,
-                        from.endPoint.distanceTo(prevRoadLocation)
+                }
+                if (from.endPoint != prevRoadLocation) {
+                    add(
+                        RoadState(
+                            from.endPoint,
+                            prevRoadLocation,
+                            from.endPoint.distanceTo(prevRoadLocation)
+                        )
                     )
-                )
-                if (from.startPoint != currRoadLocation) add(
-                    RoadState(
-                        to.startPoint,
-                        currRoadLocation,
-                        to.startPoint.distanceTo(currRoadLocation)
+                }
+                if (from.startPoint != currRoadLocation) {
+                    add(
+                        RoadState(
+                            to.startPoint,
+                            currRoadLocation,
+                            to.startPoint.distanceTo(currRoadLocation)
+                        )
                     )
-                )
-                if (from.endPoint != currRoadLocation) add(
-                    RoadState(
-                        to.endPoint,
-                        currRoadLocation,
-                        to.endPoint.distanceTo(currRoadLocation)
+                }
+                if (from.endPoint != currRoadLocation) {
+                    add(
+                        RoadState(
+                            to.endPoint,
+                            currRoadLocation,
+                            to.endPoint.distanceTo(currRoadLocation)
+                        )
                     )
-                )
+                }
             }
-        }.toSet().toList()
+        }.toSet().toList() //delete duplicate road
         val adj = makeAdj(roadList)
         dist.set(prevRoadLocation, 0)
         dijkstra(prevRoadLocation, adj)
@@ -270,9 +277,9 @@ class Viterbi(jsonString: String) {
     }
 
     //get candidate location in 200m
-    fun getCandidate(location: LatLng): List<RoadState> {
+    private fun getCandidate(location: LatLng): List<RoadState> {
         val res: MutableList<RoadState> = mutableListOf()
-        for ((seq, road) in roadMap) {
+        for ((_, road) in roadMap) {
             if (location.distanceTo(road.startPoint) < 200 ||
                 location.distanceTo(road.endPoint) < 200
             )
@@ -281,27 +288,27 @@ class Viterbi(jsonString: String) {
         return res
     }
 
-    fun getRoadLocation(road: RoadState, location: LatLng): LatLng {
+    private fun getRoadLocation(road: RoadState, location: LatLng): LatLng {
         val point = pointToLineProject(road, location)
-        val southWest: LatLng =
+        val southWest =
             LatLng(
                 min(road.startPoint.latitude, road.endPoint.latitude),
                 min(road.startPoint.longitude, road.endPoint.longitude)
             )
-        val northEast: LatLng =
+        val northEast =
             LatLng(
                 max(road.startPoint.latitude, road.endPoint.latitude),
                 max(road.startPoint.longitude, road.endPoint.longitude)
             )
-        val bound: LatLngBounds = LatLngBounds(southWest, northEast)
-        if (bound.contains(point))
-            return point
+        val bound = LatLngBounds(southWest, northEast)
+        return if (bound.contains(point))
+            point
         else {
-            return if (road.startPoint.distanceTo(point) < road.endPoint.distanceTo(point)) road.startPoint else road.endPoint
+            if (road.startPoint.distanceTo(point) < road.endPoint.distanceTo(point)) road.startPoint else road.endPoint
         }
     }
 
-    fun isNotValid(location: Location, count: Int): Int {
+    private fun isNotValid(location: Location, count: Int): Int {
         // counter :the number of false location
         var counter: Int = count
         // position of location in LatLng type
@@ -331,16 +338,17 @@ class Viterbi(jsonString: String) {
     fun getMapMatchingLocation(inputLocation: Location): LatLng {
         // counter :the number of false location
         var currRoad: RoadState? = null
-        var location = LatLng(inputLocation.latitude, inputLocation.longitude)
+        val location = LatLng(inputLocation.latitude, inputLocation.longitude)
 
         if (inputLocation.hasAccuracy() && inputLocation.hasSpeed()) {
             //check if location in valid
             counter = (isNotValid(location = inputLocation, count = counter))
             if (counter != 0) {
                 if (counter < 3) {
-                    return currRoad?.let { getRoadLocation(it, currLocation!!) } ?: currLocation!!
+                    return currRoad?.let { getRoadLocation(it, currStep!!.location) }
+                        ?: currStep!!.location
                 } else {
-                    prevStates = null
+                    prevStep = null
                     counter = 0
                 }
             }
@@ -348,49 +356,59 @@ class Viterbi(jsonString: String) {
 
         currSpeed = inputLocation.speed
         currTime = inputLocation.time
-        prevStates = currStates
-        prevLocation = currLocation
-        currLocation = location
-        prevCandidates = currCandidates
-        currCandidates = getCandidate(location)
+        prevStep = currStep
+        currStep = TimeStep(location, getCandidate(location), listOf())
 
-        currStates = currCandidates?.map { currCand ->
-            prevStates?.let { prevStates ->
-                var maxProb = 0.0
-                for ((prevRoad, prevProb) in prevStates) {
-                    val tmpProb =
-                        prevProb * getTransitionProb(prevRoad, currCand) * getEmissionProb(
-                            currCand,
-                            location
-                        )
-                    if (maxProb < tmpProb) {
-                        maxProb = tmpProb
+        // when empty candidate
+        if (currStep?.candidates.isNullOrEmpty()) return location
+        var currStates = currStep!!.candidates.map { currCand ->
+            if (prevStep == null) Pair(currCand, getEmissionProb(currCand, location))
+            else {
+                prevStep!!.states.let { prevStates ->
+                    var maxProb = 0.0
+                    for ((prevRoad, prevProb) in prevStates) {
+                        val tmpProb =
+                            prevProb * getTransitionProb(prevRoad, currCand) * getEmissionProb(
+                                currCand,
+                                location
+                            )
+                        if (maxProb < tmpProb)
+                            maxProb = tmpProb
                     }
+                    Pair(currCand, maxProb)
                 }
-                Pair(currCand, maxProb)
-            } ?: Pair(currCand, getEmissionProb(currCand, location))
-        } ?: return location
+            }
+        }
 
         var probSum = 0.0
-        currStates?.let { currStates ->
-            for ((_, prob) in currStates) {
-                probSum = probSum + prob
+        for ((_, prob) in currStates) {
+            probSum = probSum + prob
+        }
+
+        // current location is too far from previous location
+        if (probSum == 0.0) {
+            currStates = currStates.map { (currCand, _) ->
+                Pair(
+                    currCand,
+                    getEmissionProb(currCand, location)
+                )
             }
         }
+
         //normalization & remove prob < 2.0%
         currStates =
-            currStates?.map { Pair(it.first, it.second / probSum) }?.filter { it.second > 0.02 }
-        currStates?.let { currStates ->
-            var maxProb = 0.0
-            for ((road, prob) in currStates) {
-                if (maxProb < prob) {
-                    maxProb = prob
-                    currRoad = road
-                }
+            currStates.map { Pair(it.first, it.second / probSum) }.filter { it.second > 0.02 }
+
+        var maxProb = 0.0
+        for ((road, prob) in currStates) {
+            if (maxProb < prob) {
+                maxProb = prob
+                currRoad = road
             }
         }
+
+        currStep = TimeStep(location, currStep.let { it!!.candidates }, currStates)
+
         return currRoad?.let { getRoadLocation(it, location) } ?: location
-
-
     }
 }
