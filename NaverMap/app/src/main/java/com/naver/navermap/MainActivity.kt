@@ -152,7 +152,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
         //TODO: algorithm > compare current position to road data
         // set current location using map matching algorithm
-        val v = Viterbi("sample.jason")
+        val v = Viterbi(jsonString)
 
         val mainHandler = Handler(Looper.getMainLooper())
         val delay: Long = 1000
