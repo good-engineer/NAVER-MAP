@@ -1,29 +1,31 @@
 package com.naver.navermap
 
-import androidx.appcompat.app.AppCompatActivity
-import android.os.Bundle
-import android.Manifest
-import android.widget.Toast
-import android.content.pm.PackageManager
-import android.content.res.AssetManager
 import android.graphics.Color
-import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
+import android.os.Bundle
+import android.widget.Toast
+import android.content.res.AssetManager
 import com.naver.maps.geometry.LatLng
 import com.naver.maps.geometry.LatLngBounds
 import com.naver.maps.map.*
 import com.naver.maps.map.overlay.PathOverlay
 import org.json.JSONArray
-import org.json.JSONObject
 import java.io.InputStream
+import androidx.appcompat.app.AppCompatActivity
+import com.naver.maps.map.MapFragment
+import com.naver.maps.map.NaverMap
+import com.naver.maps.map.OnMapReadyCallback
+import com.naver.navermap.data.RetroResult
+import com.naver.maps.map.util.FusedLocationSource
 
-
-const val MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 1
 
 class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
-    override fun onCreate(savedInstanceState: Bundle?) {
+    private lateinit var locationSource: FusedLocationSource
+    val LOCATION_PERMISSION_REQUEST_CODE = 1000
+    var mLocationPermissionGranted = false
 
+
+    override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
@@ -33,36 +35,12 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             ?: MapFragment.newInstance().also {
                 fm.beginTransaction().add(R.id.map_fragment, it).commit()
             }
-
         //search fragment
         fm.beginTransaction().add(R.id.container, SearchFragment()).commit()
-
         mapFragment.getMapAsync(this)
 
-        // permissions
-        checkPermission()
+        locationSource = FusedLocationSource(this, LOCATION_PERMISSION_REQUEST_CODE)
 
-
-    }
-
-    fun checkPermission() {
-
-        //check if permission is granted
-        if (ContextCompat.checkSelfPermission(
-                this,
-                Manifest.permission.ACCESS_FINE_LOCATION
-            )
-            != PackageManager.PERMISSION_GRANTED
-        ) {
-            // Permission is not granted so request
-            ActivityCompat.requestPermissions(
-                this,
-                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
-                MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION
-            )
-
-
-        }
     }
 
     override fun onRequestPermissionsResult(
@@ -70,84 +48,155 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         permissions: Array<String>,
         grantResults: IntArray
     ) {
-        super
-            .onRequestPermissionsResult(
-                requestCode,
-                permissions,
+        if (locationSource.onRequestPermissionsResult(
+                requestCode, permissions,
                 grantResults
             )
-        when (requestCode) {
-            MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION -> {
-                if ((grantResults.isNotEmpty() && grantResults[0]
-                            == PackageManager.PERMISSION_GRANTED)
-                ) {
-                    //granted get current location and show on the map
-
-
-                } else {
-                    //denied
-
-                }
-
-            }
+        ) {
+            mLocationPermissionGranted = true
+            Toast.makeText(this, "Permission Granted!", Toast.LENGTH_LONG).show()
+            return
         }
+        Toast.makeText(this, "Permission Denied!", Toast.LENGTH_LONG).show()
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+
     }
-
-
     override fun onMapReady(naverMap: NaverMap) {
+
         //map camera bound
         naverMap.extent = LatLngBounds(LatLng(37.4460, 126.933), LatLng(37.475, 126.982))
 
+        naverMap.locationSource = locationSource
         // map fragment settings
-        val uiSettings = naverMap.uiSettings
-        uiSettings.isLocationButtonEnabled = true
-        uiSettings.isCompassEnabled = false
-        uiSettings.isIndoorLevelPickerEnabled = true
-        uiSettings.isZoomControlEnabled = true
+        val uiSettings = naverMap.uiSettings.apply {
+            isLocationButtonEnabled = true
+            isCompassEnabled = false
+            isIndoorLevelPickerEnabled = true
+            isZoomControlEnabled = true
+        }
 
+        val retro = RetroFitAPI.getInstance()
+        //callback 함수 설정
+        retro.apply {
+            setListener {
+                when (val res = it[0].result) {
+                    is RetroResult.NoInternetError -> {
+                        Toast.makeText(
+                            this@MainActivity, "No Internet",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                    is RetroResult.NoResponseError -> {
+                        Toast.makeText(
+                            this@MainActivity, "No Response",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                    is RetroResult.Success -> {
+                        val path = PathOverlay().apply {
+                            coords = it.map {
+                                LatLng(it.latLng.latitude, it.latLng.longitude)
+                            }
+                            map = naverMap
+                            color = Color.RED
+                        }
+                    }
+                }
+            }
+            setContext(applicationContext)
+        }
+        //dummy coordination
+        retro.getRetroFitClient(37.5586, 126.9781, 37.5701525, 126.98304)
 
         // print 좌표 of a long clicked point, to set the place as Destination
-        naverMap.setOnMapLongClickListener { point, coord ->
+        naverMap.setOnMapLongClickListener { _, coord ->
             Toast.makeText(
                 this, "${coord.latitude}, ${coord.longitude}",
                 Toast.LENGTH_SHORT
             ).show()
-        }
+            val locationOverlay = naverMap.locationOverlay
 
-        // print location if location change happens
-        naverMap.addOnLocationChangeListener { location ->
-            Toast.makeText(
-                this, "${location.latitude}, ${location.longitude}",
-                Toast.LENGTH_SHORT
-            ).show()
-        }
-
-
-        val assetManager: AssetManager = resources.assets
-        var inputStream: InputStream = assetManager.open("sample.json")
-        val jsonString = inputStream.bufferedReader().use { it.readText() }
-        val jArray = JSONArray(jsonString)
-        for(i in 0 until jArray.length()){
-            val road = jArray.getJSONObject(i)
-            val seqNum = road.getString("sequence")
-            val pathPoints = road.getJSONArray("pathPoints")
-            var coordList = mutableListOf<LatLng>()
-            for(j in 0 until pathPoints.length()){
-                val pathPoint = pathPoints.getJSONArray(j)
-                val longitude:Double = pathPoint.optDouble(0)
-                val latitude = pathPoint.optDouble(1)
-                coordList.add(LatLng(latitude, longitude))
-
+            if (mLocationPermissionGranted) {
+                naverMap.uiSettings.isLocationButtonEnabled = true
+                //locationOverlay.isVisible = true
             }
-            PathOverlay().apply {
-                coords = coordList
-                map = naverMap
-                color = Color.GREEN
+
+
+            naverMap.locationTrackingMode = LocationTrackingMode.Face
+
+            // print location if location change happens
+            //TODO: algorithm > compare current position to road data
+            // TODO: Show new position
+            naverMap.addOnLocationChangeListener { location ->
+                locationOverlay.apply {
+                    position = LatLng(location.latitude, location.longitude)
+
+                }
             }
+
+            // print 좌표 of a long clicked point, to set the place as Destination
+            //TODO: set as destination
+            naverMap.setOnMapLongClickListener { _, coord ->
+                Toast.makeText(
+                    this, "${coord.latitude}, ${coord.longitude}",
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
+
+
+            val assetManager: AssetManager = resources.assets
+            var inputStream: InputStream = assetManager.open("sample.json")
+            val jsonString = inputStream.bufferedReader().use { it.readText() }
+            val jArray = JSONArray(jsonString)
+            for (i in 0 until jArray.length()) {
+                val road = jArray.getJSONObject(i)
+                val seqNum = road.getString("sequence")
+                val pathPoints = road.getJSONArray("pathPoints")
+                var coordList = mutableListOf<LatLng>()
+                for (j in 0 until pathPoints.length()) {
+                    val pathPoint = pathPoints.getJSONArray(j)
+                    val longitude: Double = pathPoint.optDouble(0)
+                    val latitude = pathPoint.optDouble(1)
+                    coordList.add(LatLng(latitude, longitude))
+
+                }
+                PathOverlay().apply {
+                    coords = coordList
+                    map = naverMap
+                    color = Color.GREEN
+                }
+            }
+
         }
+
 
     }
-
-
 }
+
+
+//to use source location
+
+/*private fun checkPermission() {
+
+     //check if permission is granted
+     if (ContextCompat.checkSelfPermission(
+             this,
+             Manifest.permission.ACCESS_FINE_LOCATION
+         )
+         != PackageManager.PERMISSION_GRANTED
+         && ContextCompat.checkSelfPermission(
+             this,
+             Manifest.permission.ACCESS_COARSE_LOCATION
+         )
+         != PackageManager.PERMISSION_GRANTED
+     ) {
+         // Permission is not granted, so request
+         ActivityCompat.requestPermissions(
+             this,
+             PERMISSIONS,
+             REQUEST
+         )
+
+     }
+ }*/
 

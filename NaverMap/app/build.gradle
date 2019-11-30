@@ -29,7 +29,11 @@ android {
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
+<<<<<<< HEAD
     implementation"org.jetbrains.kotlin:kotlin-stdlib-jdk7:$versions.kotlin"
+=======
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$versions.kotlin"
+>>>>>>> develop
     implementation "androidx.appcompat:appcompat:$versions.appcompat"
     implementation "androidx.core:core-ktx:$versions.core"
     implementation "androidx.constraintlayout:constraintlayout:$versions.layout"
@@ -39,4 +43,11 @@ dependencies {
     implementation "com.naver.maps:map-sdk:$versions.navermap"
     implementation "com.google.android.gms:play-services-location:$versions.gms"
     implementation "com.google.android.material:material:$versions.material"
+<<<<<<< HEAD
+=======
+    implementation "com.squareup.retrofit2:retrofit:$versions.retrofit"
+    implementation "com.squareup.retrofit2:converter-gson:$versions.retrofit"
+    implementation "com.google.code.gson:gson:$versions.gson"
+    implementation "androidx.lifecycle:lifecycle-extensions:$versions.lifecycle"
+>>>>>>> develop
 }
