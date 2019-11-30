@@ -27,6 +27,7 @@ class RetroFitAPI {
     }
 
     constructor(context: Context){
+        this.context = context
         val retrofit = Retrofit.Builder()
             .baseUrl(context.getString(R.string.osrm_url))
             .addConverterFactory(GsonConverterFactory.create())
