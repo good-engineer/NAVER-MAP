@@ -82,7 +82,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             isZoomControlEnabled = true
         }
 
-        val retro = RetroFitAPI.getInstance()
+        val retro = RetroFitAPI.getInstance(applicationContext)
         //callback 함수 설정
         retro.apply {
             setListener {
@@ -110,7 +110,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                     }
                 }
             }
-            setContext(applicationContext)
         }
         //dummy coordination
         retro.getRetroFitClient(37.5586, 126.9781, 37.5701525, 126.98304)
@@ -124,91 +123,87 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         }
 
 
+        naverMap.locationTrackingMode = LocationTrackingMode.Face
 
-            naverMap.locationTrackingMode = LocationTrackingMode.Face
 
+        //
+        val assetManager: AssetManager = resources.assets
+        var inputStream: InputStream = assetManager.open("sample.json")
+        val jsonString = inputStream.bufferedReader().use { it.readText() }
+        val jArray = JSONArray(jsonString)
+        for (i in 0 until jArray.length()) {
+            val road = jArray.getJSONObject(i)
+            val seqNum = road.getString("sequence")
+            val pathPoints = road.getJSONArray("pathPoints")
+            var coordList = mutableListOf<LatLng>()
+            for (j in 0 until pathPoints.length()) {
+                val pathPoint = pathPoints.getJSONArray(j)
+                val longitude: Double = pathPoint.optDouble(0)
+                val latitude = pathPoint.optDouble(1)
+                coordList.add(LatLng(latitude, longitude))
 
-            //
-            val assetManager: AssetManager = resources.assets
-            var inputStream: InputStream = assetManager.open("sample.json")
-            val jsonString = inputStream.bufferedReader().use { it.readText() }
-            val jArray = JSONArray(jsonString)
-            for (i in 0 until jArray.length()) {
-                val road = jArray.getJSONObject(i)
-                val seqNum = road.getString("sequence")
-                val pathPoints = road.getJSONArray("pathPoints")
-                var coordList = mutableListOf<LatLng>()
-                for (j in 0 until pathPoints.length()) {
-                    val pathPoint = pathPoints.getJSONArray(j)
-                    val longitude: Double = pathPoint.optDouble(0)
-                    val latitude = pathPoint.optDouble(1)
-                    coordList.add(LatLng(latitude, longitude))
-
-                }
-                PathOverlay().apply {
-                    coords = coordList
-                    map = naverMap
-                    color = Color.GREEN
-                }
             }
-
-            //TODO: algorithm > compare current position to road data
-            // set current location using map matching algorithm
-            val v = Viterbi("sample.jason")
-
-            val mainHandler = Handler(Looper.getMainLooper())
-            val delay: Long = 1000
-            var inputLocation: Location
-
-            mainHandler.post(object : Runnable {
-                override fun run() {
-                    //get location
-                    inputLocation = locationSource.lastLocation!!
-
-                    //show raw location input
-                    val marker = Marker()
-                    marker.icon=MarkerIcons.BLACK
-                    marker.iconTintColor=Color.RED
-                    marker.width = 20
-                    marker.height = 35
-                    marker.position = LatLng(inputLocation.latitude, inputLocation.longitude)
-                    marker.map=naverMap
-
-                    //get location mapped to road
-                    currLocation = v.run {
-                        getMapMatchingLocation(inputLocation)
-                    }
-                    //show on map
-                    naverMap.locationOverlay.apply {
-                        position = LatLng(currLocation.latitude, currLocation.longitude)
-
-                    }
-
-                    mainHandler.postDelayed(this, delay)
-                }
-            })
-
+            PathOverlay().apply {
+                coords = coordList
+                map = naverMap
+                color = Color.GREEN
+            }
         }
 
-            /*//TODO: set as destination
-            // print 좌표 of a long clicked point, to set the place as Destination
-            naverMap.setOnMapLongClickListener { _, coord ->
-                Toast.makeText(
-                    this, "${coord.latitude}, ${coord.longitude}",
-                    Toast.LENGTH_SHORT
-                ).show()
-            }*/
+        //TODO: algorithm > compare current position to road data
+        // set current location using map matching algorithm
+        val v = Viterbi("sample.jason")
 
-            // print location if location change happens
-            /* naverMap.addOnLocationChangeListener { location ->
-                locationOverlay.apply {
-                    position = LatLng(location.latitude, location.longitude)
+        val mainHandler = Handler(Looper.getMainLooper())
+        val delay: Long = 1000
+        var inputLocation: Location
+
+        mainHandler.post(object : Runnable {
+            override fun run() {
+                //get location
+                inputLocation = locationSource.lastLocation!!
+
+                //show raw location input
+                val marker = Marker()
+                marker.icon = MarkerIcons.BLACK
+                marker.iconTintColor = Color.RED
+                marker.width = 20
+                marker.height = 35
+                marker.position = LatLng(inputLocation.latitude, inputLocation.longitude)
+                marker.map = naverMap
+
+                //get location mapped to road
+                currLocation = v.run {
+                    getMapMatchingLocation(inputLocation)
+                }
+                //show on map
+                naverMap.locationOverlay.apply {
+                    position = LatLng(currLocation.latitude, currLocation.longitude)
 
                 }
-            }*/
 
+                mainHandler.postDelayed(this, delay)
+            }
+        })
 
+    }
 
+    /*//TODO: set as destination
+    // print 좌표 of a long clicked point, to set the place as Destination
+    naverMap.setOnMapLongClickListener { _, coord ->
+        Toast.makeText(
+            this, "${coord.latitude}, ${coord.longitude}",
+            Toast.LENGTH_SHORT
+        ).show()
+    }*/
+
+    // print location if location change happens
+    /* naverMap.addOnLocationChangeListener { location ->
+        locationOverlay.apply {
+            position = LatLng(location.latitude, location.longitude)
+
+        }
+    }*/
 
 
 }
