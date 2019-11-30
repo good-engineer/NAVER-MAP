@@ -342,7 +342,7 @@ class Viterbi(jsonString: String) {
         var currRoad: RoadState? = null
         val location = LatLng(inputLocation.latitude, inputLocation.longitude)
 
-        if (inputLocation.hasAccuracy() && inputLocation.hasSpeed()) {
+        if (inputLocation.hasAccuracy() ){ //&& inputLocation.hasSpeed()) {
             //check if location in valid
             if (isNotValid(location = inputLocation)){
                 counter +=1

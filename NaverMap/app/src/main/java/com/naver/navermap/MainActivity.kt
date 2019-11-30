@@ -16,6 +16,12 @@ import com.naver.maps.map.NaverMap
 import com.naver.maps.map.OnMapReadyCallback
 import com.naver.navermap.data.RetroResult
 import com.naver.maps.map.util.FusedLocationSource
+import android.R.layout
+import android.location.Location
+import android.os.Handler
+import android.os.Looper
+import com.naver.maps.map.overlay.Marker
+import com.naver.maps.map.util.MarkerIcons
 
 
 class MainActivity : AppCompatActivity(), OnMapReadyCallback {
@@ -61,8 +67,9 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
 
     }
-    override fun onMapReady(naverMap: NaverMap) {
 
+    override fun onMapReady(naverMap: NaverMap) {
+        var currLocation: LatLng
         //map camera bound
         naverMap.extent = LatLngBounds(LatLng(37.4460, 126.933), LatLng(37.475, 126.982))
 
@@ -114,36 +121,14 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                 this, "${coord.latitude}, ${coord.longitude}",
                 Toast.LENGTH_SHORT
             ).show()
-            val locationOverlay = naverMap.locationOverlay
+        }
 
-            if (mLocationPermissionGranted) {
-                naverMap.uiSettings.isLocationButtonEnabled = true
-                //locationOverlay.isVisible = true
-            }
 
 
             naverMap.locationTrackingMode = LocationTrackingMode.Face
 
-            // print location if location change happens
-            //TODO: algorithm > compare current position to road data
-            // TODO: Show new position
-            naverMap.addOnLocationChangeListener { location ->
-                locationOverlay.apply {
-                    position = LatLng(location.latitude, location.longitude)
 
-                }
-            }
-
-            // print 좌표 of a long clicked point, to set the place as Destination
-            //TODO: set as destination
-            naverMap.setOnMapLongClickListener { _, coord ->
-                Toast.makeText(
-                    this, "${coord.latitude}, ${coord.longitude}",
-                    Toast.LENGTH_SHORT
-                ).show()
-            }
-
-
+            //
             val assetManager: AssetManager = resources.assets
             var inputStream: InputStream = assetManager.open("sample.json")
             val jsonString = inputStream.bufferedReader().use { it.readText() }
@@ -167,10 +152,65 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                 }
             }
 
+            //TODO: algorithm > compare current position to road data
+            // set current location using map matching algorithm
+            val v = Viterbi("sample.jason")
+
+            val mainHandler = Handler(Looper.getMainLooper())
+            val delay: Long = 1000
+            var inputLocation: Location
+
+            mainHandler.post(object : Runnable {
+                override fun run() {
+                    //get location
+                    inputLocation = locationSource.lastLocation!!
+
+                    //show raw location input
+                    val marker = Marker()
+                    marker.icon=MarkerIcons.BLACK
+                    marker.iconTintColor=Color.RED
+                    marker.width = 20
+                    marker.height = 35
+                    marker.position = LatLng(inputLocation.latitude, inputLocation.longitude)
+                    marker.map=naverMap
+
+                    //get location mapped to road
+                    currLocation = v.run {
+                        getMapMatchingLocation(inputLocation)
+                    }
+                    //show on map
+                    naverMap.locationOverlay.apply {
+                        position = LatLng(currLocation.latitude, currLocation.longitude)
+
+                    }
+
+                    mainHandler.postDelayed(this, delay)
+                }
+            })
+
         }
 
+            /*//TODO: set as destination
+            // print 좌표 of a long clicked point, to set the place as Destination
+            naverMap.setOnMapLongClickListener { _, coord ->
+                Toast.makeText(
+                    this, "${coord.latitude}, ${coord.longitude}",
+                    Toast.LENGTH_SHORT
+                ).show()
+            }*/
 
-    }
+            // print location if location change happens
+            /* naverMap.addOnLocationChangeListener { location ->
+                locationOverlay.apply {
+                    position = LatLng(location.latitude, location.longitude)
+
+                }
+            }*/
+
+
+
+
+
 }
 
 
