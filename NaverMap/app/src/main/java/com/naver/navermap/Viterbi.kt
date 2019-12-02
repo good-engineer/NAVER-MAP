@@ -126,7 +126,7 @@ class Viterbi(jsonString: String) {
                 val pathPoint = pathPoints.getJSONArray(j)
                 val location = LatLng(pathPoint.optDouble(1), pathPoint.optDouble(0))
                 if (j != 0) {
-                    tmpMap[seqNum * 10 + (j - 1)] =
+                    tmpMap[seqNum * 100 + (j - 1)] =
                         RoadState(lastLocation, location, lastLocation.distanceTo(location))
                 }
                 lastLocation = location
@@ -270,7 +270,7 @@ class Viterbi(jsonString: String) {
         dist.set(prevRoadLocation, 0)
         dijkstra(prevRoadLocation, adj)
         val minDist = dist[currRoadLocation]
-        val greatCircle = prevRoadLocation.distanceTo(currRoadLocation)
+        val greatCircle = prevStep!!.location.distanceTo(currStep!!.location)
         val prob =
             if (minDist == INF) 0.0 else 1.0 / BETA * exp(-abs(minDist!!.toDouble() - greatCircle) / BETA)
         return prob
@@ -400,6 +400,9 @@ class Viterbi(jsonString: String) {
                     currCand,
                     getEmissionProb(currCand, location)
                 )
+            }
+            for ((_, prob) in currStates) {
+                probSum = probSum + prob
             }
         }
 
