@@ -26,19 +26,22 @@ import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.location.*
 import com.google.android.gms.tasks.Task
 import com.naver.maps.map.overlay.Marker
+import com.naver.maps.map.util.FusedLocationSource
 import com.naver.maps.map.util.MarkerIcons
 
 
 class MainActivity : AppCompatActivity(), OnMapReadyCallback {
-    private var naverMap: NaverMap? = null
-    private var v:Viterbi? = null
+    private var naverMap: NaverMap? =null
+    private  lateinit var v: Viterbi
     //private lateinit var locationSource: FusedLocationSource
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var locationRequest: LocationRequest
     //private lateinit var mcurrLocation: Location
     private lateinit var locationCallback: LocationCallback
 
-    //val LOCATION_PERMISSION_REQUEST_CODE = 1000
+
+
+    val LOCATION_PERMISSION_REQUEST_CODE = 1000
     //var mLocationPermissionGranted = false
     val REQUEST_CHECK_SETTINGS = 0x1
     var UPDATE_INTERVAL: Long = 10000  // 10 sec
@@ -58,22 +61,9 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             }
         //search fragment
         fm.beginTransaction().add(R.id.container, SearchFragment()).commit()
-        mapFragment.getMapAsync { Map ->
-            naverMap = Map
-        }
-        /*
-        //map fragment settings
-        if(checkPermission()) {
-            naverMap?.let {
-                val uiSettings = it.uiSettings.apply {
-                    isLocationButtonEnabled = true
-                    isCompassEnabled = false
-                    isIndoorLevelPickerEnabled = true
-                    isZoomControlEnabled = true
-                }
-                it.locationTrackingMode = LocationTrackingMode.Face
-            }
-        }*/
+
+        mapFragment.getMapAsync(this)
+
 
         // change?
         //locationSource = FusedLocationSource(this, LOCATION_PERMISSION_REQUEST_CODE)
@@ -84,24 +74,22 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
 
-
         createLocationRequest()
         createLocationCallBack()
-
 
     }
 
     override fun onStart() {
         super.onStart()
         Toast.makeText(this, "onstart!", Toast.LENGTH_LONG).show()
-        startLocationUpdates()
+        //createLocationRequest()
+
     }
 
     override fun onResume() {
         super.onResume()
         startLocationUpdates()
     }
-
     override fun onPause() {
         super.onPause()
         stopLocationUpdates()
@@ -162,16 +150,17 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     }
 
     private fun createLocationCallBack() {
-        locationCallback = object : LocationCallback() {
-            override fun onLocationResult(locationResult: LocationResult?) {
-                locationResult ?: return
-                for (location in locationResult.locations) {
-                    // Update UI with location data
-                    // ...
-                    displayLocation(location)
-                }
-            }
+       locationCallback = object : LocationCallback() {
+           override fun onLocationResult(Result: LocationResult?) {
+               Result ?: return
+               for (location in Result.locations) {
+                   // Update UI with location data
+                   // ...
+                   displayLocation(location)
+               }
+           }
         }
+
     }
 
 
@@ -179,7 +168,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         Toast.makeText(this, "startupdatelocation", Toast.LENGTH_LONG).show()
 
         if (checkPermission()) {
-
             fusedLocationClient
                 .requestLocationUpdates(locationRequest, locationCallback, Looper.myLooper())
         }
@@ -203,6 +191,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                 marker.width = 40
                 marker.height = 50
                 marker.position = LatLng(location)
+                marker.map=it
                 Toast.makeText(this, "display location marker", Toast.LENGTH_LONG).show()
 
                 //get location mapped to road
@@ -263,10 +252,11 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         fusedLocationClient.removeLocationUpdates(locationCallback)
     }
 
-    override fun onMapReady(naverMap: NaverMap) {
+     override fun onMapReady(naverMap: NaverMap) {
         Toast.makeText(this, "on map ready!", Toast.LENGTH_LONG).show()
 
         //map camera bound
+         this.naverMap=naverMap
 
         naverMap.extent = LatLngBounds(LatLng(37.4460, 126.933), LatLng(37.475, 126.982))
 
@@ -282,6 +272,10 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             }
             it.locationTrackingMode = LocationTrackingMode.Face
         }
+
+
+
+
 
         val retro = RetroFitAPI.getInstance(applicationContext)
         //callback 함수 설정

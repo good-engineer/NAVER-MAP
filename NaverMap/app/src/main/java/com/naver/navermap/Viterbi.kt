@@ -327,7 +327,7 @@ class Viterbi(jsonString: String) {
        //according to new location's accuracy and predicted distance x
        // if the new location is too far so the location is not valid
        // set a counter
-       if (d > ((2 * location.accuracy) + x)) {
+       if (d > ((2 * location.accuracy) + x+5)) {
            return true
        }
 
@@ -344,8 +344,8 @@ class Viterbi(jsonString: String) {
         if (inputLocation.hasAccuracy() ){ //&& inputLocation.hasSpeed()) {
             //check if location in valid
             //
-            if (inputLocation.accuracy> 10)
-                if (isNotValid(inputLocation)){
+             if (inputLocation.accuracy> 10)
+               if (isNotValid(inputLocation)){
                 counter +=1
                 }
 
