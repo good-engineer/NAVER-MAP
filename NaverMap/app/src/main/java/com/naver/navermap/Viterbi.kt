@@ -344,7 +344,9 @@ class Viterbi(jsonString: String) {
 
         if (inputLocation.hasAccuracy() ){ //&& inputLocation.hasSpeed()) {
             //check if location in valid
-            if (isNotValid(location = inputLocation)){
+            //
+            if (inputLocation.accuracy> 10)
+                if (isNotValid(location = inputLocation)){
                 counter +=1
                 }
 

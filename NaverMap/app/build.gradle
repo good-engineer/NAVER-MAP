@@ -43,4 +43,5 @@ dependencies {
     implementation "com.squareup.retrofit2:converter-gson:$versions.retrofit"
     implementation "com.google.code.gson:gson:$versions.gson"
     implementation "androidx.lifecycle:lifecycle-extensions:$versions.lifecycle"
+    implementation "com.google.android.gms:play-services-location:15.0.1"
 }
