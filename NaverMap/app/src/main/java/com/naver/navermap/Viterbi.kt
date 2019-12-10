@@ -311,29 +311,28 @@ class Viterbi(jsonString: String) {
     private fun isNotValid(location: Location): Boolean {
 
         // position of location in LatLng type
-        val pos = LatLng(location.latitude, location.longitude)
+        var pos = LatLng(location.latitude, location.longitude)
         // t : time difference
-        val t : Double = 1.0
-        // in other case: val t: Double = (location.time - currTime).toDouble() / 1000.0
+        //val t : Double = 1.0
+        var t: Double = (location.time - currTime).toDouble() / 1000.0
         // a : acceleration
-        val a: Double = ((location.speed - currSpeed) / t)
+        var a: Double = ((location.speed - currSpeed) / t)
         // x : predicted distance of new location to old location
-        val x: Double = (0.5 * a * t.pow(2)) + (t * currSpeed)
+        var x: Double = (0.5 * a * t.pow(2)) + (t * currSpeed)
 
         // d : distance from currlocation to new coming location
-        val d: Double? = currStep!!.location?.let { pos.distanceTo(it) }
+        var d: Double = 0.0
+   if (currStep!=null) {
+       d = currStep!!.location.let { pos.distanceTo(it) }
+       //according to new location's accuracy and predicted distance x
+       // if the new location is too far so the location is not valid
+       // set a counter
+       if (d > ((2 * location.accuracy) + x)) {
+           return true
+       }
 
-        if (d != null) {
-            //according to new location's accuracy and predicted distance x
-            // if the new location is too far so the location is not valid
-            // set a counter
-            if (d > ((2 * location.accuracy) + x)) {
-
-                return false
-            }
-        }
-
-        return true
+      }
+        return false
     }
 
     fun getMapMatchingLocation(inputLocation: Location): LatLng {
@@ -346,7 +345,7 @@ class Viterbi(jsonString: String) {
             //check if location in valid
             //
             if (inputLocation.accuracy> 10)
-                if (isNotValid(location = inputLocation)){
+                if (isNotValid(inputLocation)){
                 counter +=1
                 }
 

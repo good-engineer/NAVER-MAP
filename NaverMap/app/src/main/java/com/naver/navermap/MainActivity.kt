@@ -30,11 +30,12 @@ import com.naver.maps.map.util.MarkerIcons
 
 
 class MainActivity : AppCompatActivity(), OnMapReadyCallback {
-    private lateinit var naverMap: NaverMap
+    private var naverMap: NaverMap? = null
+    private var v:Viterbi? = null
     //private lateinit var locationSource: FusedLocationSource
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var locationRequest: LocationRequest
-    private lateinit var mcurrLocation: Location
+    //private lateinit var mcurrLocation: Location
     private lateinit var locationCallback: LocationCallback
 
     //val LOCATION_PERMISSION_REQUEST_CODE = 1000
@@ -57,12 +58,32 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             }
         //search fragment
         fm.beginTransaction().add(R.id.container, SearchFragment()).commit()
-        mapFragment.getMapAsync(this)
+        mapFragment.getMapAsync { Map ->
+            naverMap = Map
+        }
+        /*
+        //map fragment settings
+        if(checkPermission()) {
+            naverMap?.let {
+                val uiSettings = it.uiSettings.apply {
+                    isLocationButtonEnabled = true
+                    isCompassEnabled = false
+                    isIndoorLevelPickerEnabled = true
+                    isZoomControlEnabled = true
+                }
+                it.locationTrackingMode = LocationTrackingMode.Face
+            }
+        }*/
 
         // change?
         //locationSource = FusedLocationSource(this, LOCATION_PERMISSION_REQUEST_CODE)
+        val assetManager: AssetManager = resources.assets
+        var inputStream: InputStream = assetManager.open("sample.json")
+        val jsonString = inputStream.bufferedReader().use { it.readText() }
+         v = Viterbi(jsonString)
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
+
 
         createLocationRequest()
         createLocationCallBack()
@@ -73,13 +94,11 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     override fun onStart() {
         super.onStart()
         Toast.makeText(this, "onstart!", Toast.LENGTH_LONG).show()
-
         startLocationUpdates()
     }
 
     override fun onResume() {
         super.onResume()
-
         startLocationUpdates()
     }
 
@@ -97,7 +116,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
         // location request
         locationRequest = LocationRequest.create()
-        locationRequest!!.run {
+        locationRequest.run {
             setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
             setInterval(UPDATE_INTERVAL)
             setFastestInterval(FASTEST_INTERVAL)
@@ -116,7 +135,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
         Toast.makeText(
             this,
-            "initialize location service object" + task.getResult(),
+            "initialize location service object",
             Toast.LENGTH_LONG
         ).show()
 
@@ -160,16 +179,9 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         Toast.makeText(this, "startupdatelocation", Toast.LENGTH_LONG).show()
 
         if (checkPermission()) {
-            fusedLocationClient.lastLocation
-                .addOnSuccessListener { location: Location? ->
-                    // Got last known location. In some rare situations this can be null.
-                    if (location != null) {
-                        mcurrLocation = location
-                    }
-                }
+
             fusedLocationClient
                 .requestLocationUpdates(locationRequest, locationCallback, Looper.myLooper())
-            //}
         }
     }
 
@@ -177,57 +189,59 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     private fun displayLocation(location: Location) {
         Toast.makeText(this, "display location ", Toast.LENGTH_LONG).show()
         var currLocation: LatLng
-        val assetManager: AssetManager = resources.assets
-        var inputStream: InputStream = assetManager.open("sample.json")
-        val jsonString = inputStream.bufferedReader().use { it.readText() }
-        val v = Viterbi(jsonString)
+
+
         if (location != null) {
 
-            //show raw location input
+            naverMap?.let {
+                //show raw location input
+                //show on map
 
-            val marker = Marker()
-            marker.icon = MarkerIcons.BLACK
-            marker.iconTintColor = Color.RED
-            marker.width = 20
-            marker.height = 35
-            marker.position = LatLng(location.latitude, location.longitude)
-            marker.map = naverMap
-            Toast.makeText(this, "display location marker", Toast.LENGTH_LONG).show()
+                val marker = Marker()
+                marker.icon = MarkerIcons.BLACK
+                marker.iconTintColor = Color.RED
+                marker.width = 40
+                marker.height = 50
+                marker.position = LatLng(location)
+                Toast.makeText(this, "display location marker", Toast.LENGTH_LONG).show()
 
-            //get location mapped to road
-            currLocation = v.run {
-                getMapMatchingLocation(location)
-            }
-            //show on map
-            naverMap.locationOverlay.apply {
-                position = LatLng(currLocation.latitude, currLocation.longitude)
+                //get location mapped to road
+                currLocation = v!!.run {
+                    getMapMatchingLocation(location)
+                }
+                val coord = currLocation
+                val locationOverlay = it.locationOverlay
+                locationOverlay.isVisible = true
+                locationOverlay.position = coord
+                locationOverlay.bearing = location.bearing
 
-
+                it.moveCamera(CameraUpdate.scrollTo(coord))
             }
             Toast.makeText(this, "display mapmatching result", Toast.LENGTH_LONG).show()
             //if location < 5 m to end of path road length
             //projection
-        } else {
-            Log.e("TAG", "location is null")
         }
-
 
     }
 
     private fun checkPermission(): Boolean {
-        val permissions = arrayOf("Manifest.permission.ACCESS_FINE_LOCATION", "Manifest.permission.ACCESS_COARSE_LOCATION")
-        for (permission in permissions){
-          if (ContextCompat.checkSelfPermission(
-                this,
-                permission
-            ) != PackageManager.PERMISSION_GRANTED) {
-              ActivityCompat.requestPermissions(
-                  this,
-                  permissions,
-                  1
-              )
-              return true
-          }
+        val permissions = arrayOf(
+            android.Manifest.permission.ACCESS_FINE_LOCATION,
+            android.Manifest.permission.ACCESS_COARSE_LOCATION
+        )
+        for (permission in permissions) {
+            if (ContextCompat.checkSelfPermission(
+                    this,
+                    permission
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
+                ActivityCompat.requestPermissions(
+                    this,
+                    permissions,
+                    1
+                )
+
+            }
         }
         return true
     }
@@ -259,16 +273,15 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         //naverMap.locationSource = locationSource
 
         // map fragment settings
-        val uiSettings = naverMap.uiSettings.apply {
-            isLocationButtonEnabled = true
-            isCompassEnabled = false
-            isIndoorLevelPickerEnabled = true
-            isZoomControlEnabled = true
+        naverMap?.let {
+            val uiSettings = it.uiSettings.apply {
+                isLocationButtonEnabled = true
+                isCompassEnabled = false
+                isIndoorLevelPickerEnabled = true
+                isZoomControlEnabled = true
+            }
+            it.locationTrackingMode = LocationTrackingMode.Face
         }
-
-
-        naverMap.locationTrackingMode = LocationTrackingMode.Face
-
 
         val retro = RetroFitAPI.getInstance(applicationContext)
         //callback 함수 설정
