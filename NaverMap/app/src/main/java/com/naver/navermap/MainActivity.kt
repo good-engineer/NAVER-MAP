@@ -19,14 +19,12 @@ import com.naver.maps.map.OnMapReadyCallback
 import com.naver.navermap.data.RetroResult
 import android.location.Location
 import android.os.Looper
-import android.util.Log
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.location.*
 import com.google.android.gms.tasks.Task
 import com.naver.maps.map.overlay.Marker
-import com.naver.maps.map.util.FusedLocationSource
 import com.naver.maps.map.util.MarkerIcons
 
 
@@ -39,9 +37,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     //private lateinit var mcurrLocation: Location
     private lateinit var locationCallback: LocationCallback
 
-
-
-    val LOCATION_PERMISSION_REQUEST_CODE = 1000
+   // val LOCATION_PERMISSION_REQUEST_CODE = 1000
     //var mLocationPermissionGranted = false
     val REQUEST_CHECK_SETTINGS = 0x1
     var UPDATE_INTERVAL: Long = 10000  // 10 sec
@@ -51,7 +47,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        //updateValuesFromBundle(savedInstanceState)
+
 
         //map fragment manager
         val fm = supportFragmentManager
@@ -79,12 +75,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
     }
 
-    override fun onStart() {
-        super.onStart()
-        Toast.makeText(this, "onstart!", Toast.LENGTH_LONG).show()
-        //createLocationRequest()
-
-    }
 
     override fun onResume() {
         super.onResume()
@@ -121,12 +111,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         val task: Task<LocationSettingsResponse> =
             settingsClient.checkLocationSettings(locationSettingsRequest)
 
-        Toast.makeText(
-            this,
-            "initialize location service object",
-            Toast.LENGTH_LONG
-        ).show()
-
         task.addOnSuccessListener {
 
             startLocationUpdates()
@@ -153,6 +137,9 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
        locationCallback = object : LocationCallback() {
            override fun onLocationResult(Result: LocationResult?) {
                Result ?: return
+
+               displayLocation(Result.lastLocation)
+
                for (location in Result.locations) {
                    // Update UI with location data
                    // ...
@@ -175,7 +162,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
 
     private fun displayLocation(location: Location) {
-        Toast.makeText(this, "display location ", Toast.LENGTH_LONG).show()
+        //Toast.makeText(this, "display location ", Toast.LENGTH_LONG).show()
         var currLocation: LatLng
 
 
@@ -192,7 +179,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                 marker.height = 50
                 marker.position = LatLng(location)
                 marker.map=it
-                Toast.makeText(this, "display location marker", Toast.LENGTH_LONG).show()
+               // Toast.makeText(this, "display location marker", Toast.LENGTH_LONG).show()
 
                 //get location mapped to road
                 currLocation = v!!.run {
@@ -203,10 +190,10 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                 locationOverlay.isVisible = true
                 locationOverlay.position = coord
                 locationOverlay.bearing = location.bearing
-
                 it.moveCamera(CameraUpdate.scrollTo(coord))
+                //Toast.makeText(this, "display mapmatching result", Toast.LENGTH_LONG).show()
             }
-            Toast.makeText(this, "display mapmatching result", Toast.LENGTH_LONG).show()
+
             //if location < 5 m to end of path road length
             //projection
         }
@@ -253,7 +240,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     }
 
      override fun onMapReady(naverMap: NaverMap) {
-        Toast.makeText(this, "on map ready!", Toast.LENGTH_LONG).show()
+        //Toast.makeText(this, "on map ready!", Toast.LENGTH_LONG).show()
 
         //map camera bound
          this.naverMap=naverMap
@@ -265,17 +252,14 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         // map fragment settings
         naverMap?.let {
             val uiSettings = it.uiSettings.apply {
-                isLocationButtonEnabled = true
+                isLocationButtonEnabled = false
                 isCompassEnabled = false
                 isIndoorLevelPickerEnabled = true
                 isZoomControlEnabled = true
             }
             it.locationTrackingMode = LocationTrackingMode.Face
         }
-
-
-
-
+         
 
         val retro = RetroFitAPI.getInstance(applicationContext)
         //callback 함수 설정
