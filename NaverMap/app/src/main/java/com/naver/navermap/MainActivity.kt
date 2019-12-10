@@ -9,6 +9,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.naver.maps.geometry.LatLng
+import com.naver.maps.geometry.LatLngBounds
 import com.naver.maps.map.MapFragment
 import com.naver.maps.map.NaverMap
 import com.naver.maps.map.OnMapReadyCallback
@@ -67,6 +68,10 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
         naverMap.locationSource = locationSource
 
+        //map camera bound
+
+        naverMap.extent = LatLngBounds(LatLng(37.4460, 126.933), LatLng(37.475, 126.982))
+
         // map fragment settings
         val uiSettings = naverMap.uiSettings.apply {
             isLocationButtonEnabled = true
@@ -75,7 +80,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             isZoomControlEnabled = true
         }
 
-        val retro = RetroFitAPI.getInstance()
+        val retro = RetroFitAPI.getInstance(applicationContext)
         //callback 함수 설정
         retro.apply {
             setListener {
@@ -103,24 +108,11 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                     }
                 }
             }
-            setContext(applicationContext)
         }
         //dummy coordination
         retro.getRetroFitClient(37.5586, 126.9781, 37.5701525, 126.98304)
 
-        // print 좌표 of a long clicked point, to set the place as Destination
-        naverMap.setOnMapLongClickListener { _, coord ->
-            Toast.makeText(
-                this, "${coord.latitude}, ${coord.longitude}",
-                Toast.LENGTH_SHORT
-            ).show()
         val locationOverlay = naverMap.locationOverlay
-
-        if (mLocationPermissionGranted) {
-            naverMap.uiSettings.isLocationButtonEnabled = true
-            //locationOverlay.isVisible = true
-        }
-
 
         naverMap.locationTrackingMode = LocationTrackingMode.Face
 

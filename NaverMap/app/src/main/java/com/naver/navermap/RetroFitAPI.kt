@@ -19,14 +19,15 @@ class RetroFitAPI {
         @Volatile
         private var INSTANCE: RetroFitAPI? = null
 
-        fun getInstance(): RetroFitAPI {
+        fun getInstance(context: Context): RetroFitAPI {
             return INSTANCE ?: synchronized(this) {
-                RetroFitAPI().also { INSTANCE = it }
+                RetroFitAPI(context).also { INSTANCE = it }
             }
         }
     }
 
-    init {
+    constructor(context: Context){
+        this.context = context
         val retrofit = Retrofit.Builder()
             .baseUrl(context.getString(R.string.osrm_url))
             .addConverterFactory(GsonConverterFactory.create())
@@ -36,10 +37,6 @@ class RetroFitAPI {
 
     fun setListener(listener: (List<Coordination>) -> Unit) {
         this.listener = listener
-    }
-
-    fun setContext(context: Context){
-        this.context = context
     }
 
     fun getRetroFitClient(
