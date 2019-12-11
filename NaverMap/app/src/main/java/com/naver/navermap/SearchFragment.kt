@@ -17,19 +17,6 @@ class SearchFragment : Fragment() {
     ): View? {
         val rootview = inflater.inflate(R.layout.fragment_search, container, false)
 
-        var destination = ""
-        val editText = rootview.findViewById(R.id.search) as EditText
-        editText.setOnEditorActionListener { _, keyCode, _ ->
-            if (keyCode == EditorInfo.IME_ACTION_DONE) {
-                // use editText.text.toString()
-                Toast.makeText(
-                    context, editText.text.toString(),
-                    Toast.LENGTH_SHORT
-                ).show()
-            }
-            false
-        }
-
 
         return rootview
     }

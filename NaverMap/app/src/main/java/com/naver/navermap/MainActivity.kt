@@ -1,22 +1,18 @@
 package com.naver.navermap
 
-import android.Manifest
-import android.content.pm.PackageManager
 import android.graphics.Color
 import android.os.Bundle
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
 import com.naver.maps.geometry.LatLng
 import com.naver.maps.geometry.LatLngBounds
+import com.naver.maps.map.LocationTrackingMode
 import com.naver.maps.map.MapFragment
 import com.naver.maps.map.NaverMap
 import com.naver.maps.map.OnMapReadyCallback
 import com.naver.maps.map.overlay.PathOverlay
-import com.naver.navermap.data.RetroResult
-import com.naver.maps.map.*
 import com.naver.maps.map.util.FusedLocationSource
+import com.naver.navermap.data.RetroResult
 
 
 class MainActivity : AppCompatActivity(), OnMapReadyCallback {
@@ -39,9 +35,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         mapFragment.getMapAsync(this)
         locationSource = FusedLocationSource(this, LOCATION_PERMISSION_REQUEST_CODE)
     }
-
-
-
 
     override fun onRequestPermissionsResult(
         requestCode: Int,
@@ -129,6 +122,14 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         // print 좌표 of a long clicked point, to set the place as Destination
         //TODO: set as destination
         naverMap.setOnMapLongClickListener { _, coord ->
+            val fm = supportFragmentManager
+            fm.findFragmentById(R.id.container)?.let {
+                fm.beginTransaction().remove(it).commit()
+            }
+            val transaction = fm.beginTransaction().replace(R.id.map_fragment, RouteFragment())
+            transaction.addToBackStack(null)
+            transaction.commit()
+
             Toast.makeText(
                 this, "${coord.latitude}, ${coord.longitude}",
                 Toast.LENGTH_SHORT

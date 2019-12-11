@@ -14,7 +14,8 @@ buildscript {
             'retrofit' : '2.6.2',
             'gson'     : '2.8.6',
             'lifecycle': '2.1.0',
-            'appcompat': '1.1.0'
+            'appcompat': '1.1.0',
+            'recycleview': '1.0.0'
     ]
     repositories {
         google()
