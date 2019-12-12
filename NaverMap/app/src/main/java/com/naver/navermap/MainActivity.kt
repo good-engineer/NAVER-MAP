@@ -141,7 +141,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             }
 
             val searchFragment = fm.findFragmentById(R.id.container) as SearchFragment?
-            searchFragment?.let{
+            searchFragment?.let {
                 it.setText("%.6f, ".format(coord.latitude) + "%.6f".format(coord.longitude))
             }
 
