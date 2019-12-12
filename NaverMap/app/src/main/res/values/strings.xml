@@ -5,6 +5,7 @@
     <string name="retrofit_success">OK</string>
     <string name="direction">방향</string>
     <string name="source">출발지</string>
+    <string name="desination">도착지</string>
     <string name="distance">거리</string>
     <string name="route">ROUTE</string>
 

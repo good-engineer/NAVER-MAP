@@ -15,7 +15,7 @@ import kotlinx.android.synthetic.main.fragment_route.*
 class RouteFragment(pointList: List<LatLng>) : Fragment() {
     //var routeList: List<RouteItem> =
     //   listOf(RouteItem(LatLng(37.4603, 126.95), 10.0, Direction.FRONT))
-    val routeList: List<RouteItem>
+    private val routeList: List<RouteItem>
 
     init {
         val tmpList: MutableList<RouteItem> = mutableListOf()
@@ -37,13 +37,11 @@ class RouteFragment(pointList: List<LatLng>) : Fragment() {
         recyclerView.adapter = RecyAdapter(activity!!, routeList)
         recyclerView.layoutManager = LinearLayoutManager(activity)
         val source = view.findViewById(R.id.sourceText) as TextView
-        source.setText("%.6f, ".format(routeList[0].source.latitude) + "%.6f".format(routeList[0].source.longitude))
+        val sourceText = "%.6f, ".format(routeList[0].source.latitude) + "%.6f".format(routeList[0].source.longitude)
+        source.text = sourceText
         val dest = view.findViewById(R.id.destText) as TextView
-        dest.setText(
-            "%.6f, ".format(routeList[routeList.size - 1].source.latitude) + "%.6f".format(
-                routeList[routeList.size - 1].source.longitude
-            )
-        )
+        val destText = "%.6f, ".format(routeList[routeList.size - 1].source.latitude) + "%.6f".format(routeList[routeList.size - 1].source.longitude)
+        dest.text = destText
     }
 
     override fun onCreateView(

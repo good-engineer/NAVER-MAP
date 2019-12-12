@@ -8,14 +8,14 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="#FFFFFF"
-        android:text="TextView" />
+        android:text="@string/source" />
 
     <TextView
         android:id="@+id/destText"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="#FFFFFF"
-        android:text="TextView" />
+        android:text="@string/desination" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerView"
