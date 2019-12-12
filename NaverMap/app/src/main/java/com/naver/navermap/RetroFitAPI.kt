@@ -1,6 +1,6 @@
 package com.naver.navermap
 
-import android.content.Context
+import android.app.Application
 import com.naver.maps.geometry.LatLng
 import com.naver.navermap.data.RetroCoord
 import com.naver.navermap.data.RetroResult
@@ -10,26 +10,24 @@ import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
-class RetroFitAPI {
+class RetroFitAPI(val applicationContext: Application) {
     private lateinit var listener: (List<RetroCoord>) -> Unit
-    private lateinit var context: Context
-    val service: RetrofitService
+    private val service: RetrofitService
 
     companion object {
         @Volatile
         private var INSTANCE: RetroFitAPI? = null
 
-        fun getInstance(context: Context): RetroFitAPI {
+        fun getInstance(applcationContext: Application): RetroFitAPI {
             return INSTANCE ?: synchronized(this) {
-                RetroFitAPI(context).also { INSTANCE = it }
+                RetroFitAPI(applcationContext).also { INSTANCE = it }
             }
         }
     }
 
-    constructor(context: Context){
-        this.context = context
+    init {
         val retrofit = Retrofit.Builder()
-            .baseUrl(context.getString(R.string.osrm_url))
+            .baseUrl(applicationContext.getString(R.string.osrm_url))
             .addConverterFactory(GsonConverterFactory.create())
             .build()
         service = retrofit.create(RetrofitService::class.java)
@@ -57,9 +55,9 @@ class RetroFitAPI {
             override fun onResponse(call: Call<Route>, response: Response<Route>) {
                 if (response.isSuccessful) {
                     listener(response.body()?.let {
-                        it.routes[0].legs[0].steps.map { it ->
+                        it.routes[0].legs[0].steps.map {
                             RetroCoord(
-                                RetroResult.Success(context.getString(R.string.retrofit_success)),
+                                RetroResult.Success(applicationContext.getString(R.string.retrofit_success)),
                                 LatLng(it.maneuver.location[1], it.maneuver.location[0])
                             )
                         }
@@ -78,5 +76,4 @@ class RetroFitAPI {
             }
         })
     }
-
 }

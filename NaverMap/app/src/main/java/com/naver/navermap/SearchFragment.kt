@@ -18,21 +18,23 @@ class SearchFragment : Fragment() {
     ): View? {
         val rootview = inflater.inflate(R.layout.fragment_search, container, false)
 
-        editText = rootview.findViewById(R.id.searchText) as EditText
-        editText!!.setOnEditorActionListener { _, keyCode, _ ->
-            if (keyCode == EditorInfo.IME_ACTION_DONE) {
-                // use editText.text.toString()
-                Toast.makeText(
-                    context, editText!!.text.toString(),
-                    Toast.LENGTH_SHORT
-                ).show()
+        editText = rootview.findViewById(R.id.search_text) as EditText?
+        editText?.let {
+            it.setOnEditorActionListener { _, keyCode, _ ->
+                if (keyCode == EditorInfo.IME_ACTION_DONE) {
+                    // use editText.text.toString()
+                    Toast.makeText(
+                        context, it.text.toString(),
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+                false
             }
-            false
-        }
+        } ?: return rootview
         return rootview
     }
 
     fun setText(text: String) {
-        editText!!.setText(text)
+        editText?.setText(text) ?: return
     }
 }

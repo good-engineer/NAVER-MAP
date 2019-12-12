@@ -15,25 +15,25 @@ import com.naver.maps.map.overlay.PathOverlay
 import com.naver.maps.map.util.FusedLocationSource
 import com.naver.navermap.data.RetroResult
 
-
 class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var locationSource: FusedLocationSource
-    val LOCATION_PERMISSION_REQUEST_CODE = 1000
     var mLocationPermissionGranted = false
     private var currLocation: Location? = null
-    private var pointList: List<LatLng>? = null
     private var path: PathOverlay? = null
-    private var isFragmentOn: Boolean = false
+    val fm = supportFragmentManager
+
+    companion object {
+        val LOCATION_PERMISSION_REQUEST_CODE = 1000
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
         //map fragment manager
-        val fm = supportFragmentManager
-        val mapFragment = fm.findFragmentById(R.id.mapFragment) as MapFragment?
+        val mapFragment = fm.findFragmentById(R.id.map_fragment) as MapFragment?
             ?: MapFragment.newInstance().also {
-                fm.beginTransaction().add(R.id.mapFragment, it).commit()
+                fm.beginTransaction().add(R.id.map_fragment, it).commit()
             }
         //search fragment
         fm.beginTransaction().add(R.id.container, SearchFragment()).commit()
@@ -57,25 +57,18 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         }
         Toast.makeText(this, "Permission Denied!", Toast.LENGTH_LONG).show()
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-
-
     }
 
     override fun onBackPressed() {
-        if (isFragmentOn) {
-            val fm = supportFragmentManager
-            isFragmentOn = false
-            fm.beginTransaction().remove(fm.findFragmentById(R.id.routeFragment)!!).commit()
-        } else
-            super.onBackPressed()
+        fm.findFragmentById(R.id.route_fragment)?.let {
+            fm.beginTransaction().remove(it).commit()
+        } ?: super.onBackPressed()
     }
 
     override fun onMapReady(naverMap: NaverMap) {
-
         naverMap.locationSource = locationSource
 
         //map camera bound
-
         naverMap.extent = LatLngBounds(LatLng(37.4460, 126.933), LatLng(37.475, 126.982))
 
         // map fragment settings
@@ -86,7 +79,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             isZoomControlEnabled = true
         }
 
-        val retro = RetroFitAPI.getInstance(applicationContext)
+        val retro = RetroFitAPI.getInstance(application)
         //callback 함수 설정
         retro.apply {
             setListener {
@@ -112,14 +105,11 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                             map = naverMap
                             color = Color.RED
                         }
-                        pointList = it.map {
-                            LatLng(it.latLng.latitude, it.latLng.longitude)
-                        }
 
-                        val fm = supportFragmentManager
-                        isFragmentOn = true
                         fm.beginTransaction()
-                            .add(R.id.routeFragment, RouteFragment.newinstance(pointList!!))
+                            .add(R.id.route_fragment, RouteFragment.newInstance(it.map {
+                                LatLng(it.latLng.latitude, it.latLng.longitude)
+                            }))
                             .commit()
                     }
                 }
@@ -136,21 +126,24 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         naverMap.addOnLocationChangeListener { location ->
             locationOverlay.apply {
                 position = LatLng(location.latitude, location.longitude)
-                currLocation = location
             }
+            currLocation = location
         }
 
         naverMap.setOnMapLongClickListener { _, coord ->
-            retro.getRetroFitClient(
-                currLocation!!.latitude,
-                currLocation!!.longitude,
-                coord.latitude,
-                coord.longitude
-            )
+            currLocation?.let {
+                retro.getRetroFitClient(
+                    it.latitude,
+                    it.longitude,
+                    coord.latitude,
+                    coord.longitude
+                )
+            }
 
-            val fm = supportFragmentManager
-            val searchFragment = fm.findFragmentById(R.id.container) as SearchFragment
-            searchFragment.setText("%.6f, ".format(coord.latitude) + "%.6f".format(coord.longitude))
+            val searchFragment = fm.findFragmentById(R.id.container) as SearchFragment?
+            searchFragment?.let{
+                it.setText("%.6f, ".format(coord.latitude) + "%.6f".format(coord.longitude))
+            }
 
             Toast.makeText(
                 this, "${coord.latitude}, ${coord.longitude}",
@@ -158,8 +151,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             ).show()
         }
     }
-
-
 }
 
 //to use source location

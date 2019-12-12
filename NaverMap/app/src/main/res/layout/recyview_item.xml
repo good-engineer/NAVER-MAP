@@ -11,7 +11,7 @@
         android:orientation="vertical">
 
         <TextView
-            android:id="@+id/startText"
+            android:id="@+id/start_text"
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="60"
@@ -24,7 +24,7 @@
             android:textStyle="bold" />
 
         <TextView
-            android:id="@+id/distText"
+            android:id="@+id/dist_text"
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:background="#FFFFFF"
@@ -36,7 +36,7 @@
     </LinearLayout>
 
     <TextView
-        android:id="@+id/directText"
+        android:id="@+id/direct_text"
         android:layout_width="0dp"
         android:layout_height="match_parent"
         android:background="#FFFFFF"
@@ -44,4 +44,5 @@
         android:text="@string/direction"
         android:layout_weight="20"
         />
+
 </LinearLayout>

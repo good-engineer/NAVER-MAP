@@ -22,15 +22,15 @@ class RecyAdapter(val context: Context, val routeList: List<RouteItem>) : Recycl
         holder.bind(routeList[position], context)
     }
 
-    inner class Holder(itemView: View?) : RecyclerView.ViewHolder(itemView!!) {
-        val startPoint = itemView?.findViewById<TextView>(R.id.startText)
-        val distance = itemView?.findViewById<TextView>(R.id.distText)
-        val direction = itemView?.findViewById<TextView>(R.id.directText)
+    class Holder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        val startPoint = itemView.findViewById<TextView>(R.id.start_text)
+        val distance = itemView.findViewById<TextView>(R.id.dist_text)
+        val direction = itemView.findViewById<TextView>(R.id.direct_text)
 
         fun bind (route: RouteItem, context: Context) {
-            startPoint?.text = route.source.toString()
-            distance?.text = route.distance.toString()
-            direction?.text = route.direction.toString()
+            startPoint.text = route.source.toString()
+            distance.text = route.distance.toString()
+            direction.text = route.direction.toString()
         }
     }
 }

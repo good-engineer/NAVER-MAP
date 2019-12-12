@@ -4,24 +4,23 @@
     android:layout_height="match_parent">
 
     <TextView
-        android:id="@+id/sourceText"
+        android:id="@+id/source_text"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="#FFFFFF"
         android:text="@string/source" />
 
     <TextView
-        android:id="@+id/destText"
+        android:id="@+id/dest_text"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="#FFFFFF"
         android:text="@string/desination" />
 
     <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/recyclerView"
+        android:id="@+id/recycler_view"
         android:layout_width="match_parent"
         android:background="#FFFFFF"
         android:layout_height="match_parent" />
-
 
 </LinearLayout>
