@@ -8,8 +8,7 @@ import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.naver.maps.geometry.LatLng
-import com.naver.navermap.data.Direction
-import com.naver.navermap.data.RouteItem
+import com.naver.navermap.data.*
 import kotlinx.android.synthetic.main.fragment_route.*
 
 class RouteFragment(pointList: List<LatLng>) : Fragment() {
@@ -20,12 +19,30 @@ class RouteFragment(pointList: List<LatLng>) : Fragment() {
     init {
         val tmpList: MutableList<RouteItem> = mutableListOf()
         for (i in 0 until pointList.size) {
-            if (i == pointList.size - 1) tmpList.add(RouteItem(pointList[i], 0.0, Direction.FRONT))
+            if (i == pointList.size - 1) tmpList.add(RouteItem(pointList[i], 0.0, Direction.NIL))
             else tmpList.add(
                 RouteItem(
                     pointList[i],
                     pointList[i].distanceTo(pointList[i + 1]),
-                    Direction.FRONT
+                    if (i == 0) Direction.FRONT
+                    else {
+                        val cos =
+                            vecCos(pointList[i - 1], pointList[i], pointList[i], pointList[i + 1])
+                        val direct = dot(
+                            outerProduct(
+                                pointList[i - 1],
+                                pointList[i],
+                                pointList[i],
+                                pointList[i + 1]
+                            ), latLngToCart(pointList[i])
+                        )
+                        if (cos > 0.5) Direction.FRONT
+                        else if (cos < -0.5) Direction.BACK
+                        else {
+                            if (direct > 0) Direction.LEFT
+                            else Direction.RIGHT
+                        }
+                    }
                 )
             )
         }
@@ -37,10 +54,12 @@ class RouteFragment(pointList: List<LatLng>) : Fragment() {
         recyclerView.adapter = RecyAdapter(activity!!, routeList)
         recyclerView.layoutManager = LinearLayoutManager(activity)
         val source = view.findViewById(R.id.sourceText) as TextView
-        val sourceText = "%.6f, ".format(routeList[0].source.latitude) + "%.6f".format(routeList[0].source.longitude)
+        val sourceText =
+            "%.6f, ".format(routeList[0].source.latitude) + "%.6f".format(routeList[0].source.longitude)
         source.text = sourceText
         val dest = view.findViewById(R.id.destText) as TextView
-        val destText = "%.6f, ".format(routeList[routeList.size - 1].source.latitude) + "%.6f".format(routeList[routeList.size - 1].source.longitude)
+        val destText =
+            "%.6f, ".format(routeList[routeList.size - 1].source.latitude) + "%.6f".format(routeList[routeList.size - 1].source.longitude)
         dest.text = destText
     }
 

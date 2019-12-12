@@ -74,9 +74,15 @@ fun outerProduct(start: Coordination, end: Coordination): Coordination {
     return Coordination(start.y * end.z - start.z * end.y, start.z * end.x - start.x * end.z, start.x * end.y - start.y * end.x)
 }
 
-fun vecSin(start1: LatLng, start2: LatLng, end1: LatLng, end2: LatLng): Double {
+fun outerProduct(start1: LatLng, start2: LatLng, end1: LatLng, end2: LatLng): Coordination {
     val start = subCoord(latLngToCart(start2), latLngToCart(start1))
     val end = subCoord(latLngToCart(end2), latLngToCart(end1))
-    val outer = outerProduct(start, end)
-    return sizeCoord(outer) / (sizeCoord(start) * sizeCoord(end))
+    return Coordination(start.y * end.z - start.z * end.y, start.z * end.x - start.x * end.z, start.x * end.y - start.y * end.x)
+}
+
+fun vecCos(start1: LatLng, start2: LatLng, end1: LatLng, end2: LatLng): Double {
+    val start = subCoord(latLngToCart(start2), latLngToCart(start1))
+    val end = subCoord(latLngToCart(end2), latLngToCart(end1))
+    val inner = dot(start, end)
+    return inner / (sizeCoord(start) * sizeCoord(end))
 }
