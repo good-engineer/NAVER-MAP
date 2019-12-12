@@ -8,7 +8,8 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.naver.navermap.data.RouteItem
 
-class RecyAdapter(val context: Context, val routeList: List<RouteItem>) : RecyclerView.Adapter<RecyAdapter.Holder>() {
+class RecyAdapter(val context: Context, val routeList: List<RouteItem>) :
+    RecyclerView.Adapter<RecyAdapter.Holder>() {
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): Holder {
         val view = LayoutInflater.from(context).inflate(R.layout.recyview_item, parent, false)
         return Holder(view)
@@ -27,7 +28,7 @@ class RecyAdapter(val context: Context, val routeList: List<RouteItem>) : Recycl
         val distance = itemView.findViewById<TextView>(R.id.dist_text)
         val direction = itemView.findViewById<TextView>(R.id.direct_text)
 
-        fun bind (route: RouteItem, context: Context) {
+        fun bind(route: RouteItem, context: Context) {
             startPoint.text = route.source.toString()
             distance.text = route.distance.toString()
             direction.text = route.direction.toString()
