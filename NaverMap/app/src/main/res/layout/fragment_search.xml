@@ -4,7 +4,7 @@
     android:layout_height="match_parent">
 
     <EditText
-        android:id="@+id/search_text"
+        android:id="@+id/searchText"
         android:background="@android:color/background_light"
         android:layout_height="35dp"
         android:layout_width="match_parent"

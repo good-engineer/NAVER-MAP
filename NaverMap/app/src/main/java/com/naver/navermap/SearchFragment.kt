@@ -18,8 +18,7 @@ class SearchFragment : Fragment() {
     ): View? {
         val rootview = inflater.inflate(R.layout.fragment_search, container, false)
 
-        var destination = ""
-        editText = rootview.findViewById(R.id.search_text) as EditText
+        editText = rootview.findViewById(R.id.searchText) as EditText
         editText!!.setOnEditorActionListener { _, keyCode, _ ->
             if (keyCode == EditorInfo.IME_ACTION_DONE) {
                 // use editText.text.toString()
@@ -30,10 +29,9 @@ class SearchFragment : Fragment() {
             }
             false
         }
-
-
         return rootview
     }
+
     fun setText(text: String) {
         editText!!.setText(text)
     }

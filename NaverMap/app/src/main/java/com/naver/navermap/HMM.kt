@@ -7,4 +7,3 @@ data class RoadState(
     val endPoint: LatLng,
     val distance: Double
 )
-

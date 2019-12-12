@@ -11,20 +11,23 @@
         android:orientation="vertical">
 
         <TextView
-            android:id="@+id/textStart"
+            android:id="@+id/startText"
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:text="@string/source"
             android:layout_weight="60"
+            android:background="#FFFFFF"
             android:gravity="center_vertical"
             android:paddingStart="10dp"
             android:paddingEnd="10dp"
-            android:textStyle="bold"
-            android:textColor="#33aabb" />
+            android:text="@string/source"
+            android:textColor="#33aabb"
+            android:textStyle="bold" />
+
         <TextView
-            android:id="@+id/textDist"
+            android:id="@+id/distText"
             android:layout_width="match_parent"
             android:layout_height="0dp"
+            android:background="#FFFFFF"
             android:text="@string/distance"
             android:layout_weight="40"
             android:gravity="center_vertical"
@@ -33,9 +36,10 @@
     </LinearLayout>
 
     <TextView
-        android:id="@+id/textDirect"
+        android:id="@+id/directText"
         android:layout_width="0dp"
         android:layout_height="match_parent"
+        android:background="#FFFFFF"
         android:gravity="center"
         android:text="@string/direction"
         android:layout_weight="20"
