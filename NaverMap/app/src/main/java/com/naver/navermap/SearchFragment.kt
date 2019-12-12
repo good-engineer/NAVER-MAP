@@ -10,6 +10,7 @@ import android.widget.Toast
 import androidx.fragment.app.Fragment
 
 class SearchFragment : Fragment() {
+    private var editText: EditText? = null
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -17,7 +18,23 @@ class SearchFragment : Fragment() {
     ): View? {
         val rootview = inflater.inflate(R.layout.fragment_search, container, false)
 
+        var destination = ""
+        editText = rootview.findViewById(R.id.search_text) as EditText
+        editText!!.setOnEditorActionListener { _, keyCode, _ ->
+            if (keyCode == EditorInfo.IME_ACTION_DONE) {
+                // use editText.text.toString()
+                Toast.makeText(
+                    context, editText!!.text.toString(),
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
+            false
+        }
+
 
         return rootview
+    }
+    fun setText(text: String) {
+        editText!!.setText(text)
     }
 }

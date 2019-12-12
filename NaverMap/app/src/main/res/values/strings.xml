@@ -6,6 +6,7 @@
     <string name="direction">방향</string>
     <string name="source">출발지</string>
     <string name="distance">거리</string>
+    <string name="route">ROUTE</string>
 
     <!-- Default screen margins, per the Android Design guidelines. -->
     <dimen name="activity_horizontal_margin">16dp</dimen>

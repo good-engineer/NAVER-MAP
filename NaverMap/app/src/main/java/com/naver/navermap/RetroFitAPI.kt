@@ -2,7 +2,7 @@ package com.naver.navermap
 
 import android.content.Context
 import com.naver.maps.geometry.LatLng
-import com.naver.navermap.data.Coordination
+import com.naver.navermap.data.RetroCoord
 import com.naver.navermap.data.RetroResult
 import retrofit2.Call
 import retrofit2.Callback
@@ -11,7 +11,7 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
 class RetroFitAPI {
-    private lateinit var listener: (List<Coordination>) -> Unit
+    private lateinit var listener: (List<RetroCoord>) -> Unit
     private lateinit var context: Context
     val service: RetrofitService
 
@@ -35,7 +35,7 @@ class RetroFitAPI {
         service = retrofit.create(RetrofitService::class.java)
     }
 
-    fun setListener(listener: (List<Coordination>) -> Unit) {
+    fun setListener(listener: (List<RetroCoord>) -> Unit) {
         this.listener = listener
     }
 
@@ -51,14 +51,14 @@ class RetroFitAPI {
         ).enqueue(object :
             Callback<Route> {
             override fun onFailure(call: Call<Route>, t: Throwable) {
-                listener(listOf(Coordination(RetroResult.NoInternetError(t), LatLng(0.0, 0.0))))
+                listener(listOf(RetroCoord(RetroResult.NoInternetError(t), LatLng(0.0, 0.0))))
             }
 
             override fun onResponse(call: Call<Route>, response: Response<Route>) {
                 if (response.isSuccessful) {
                     listener(response.body()?.let {
                         it.routes[0].legs[0].steps.map { it ->
-                            Coordination(
+                            RetroCoord(
                                 RetroResult.Success(context.getString(R.string.retrofit_success)),
                                 LatLng(it.maneuver.location[1], it.maneuver.location[0])
                             )
@@ -67,7 +67,7 @@ class RetroFitAPI {
                 } else {
                     listener(
                         listOf(
-                            Coordination(
+                            RetroCoord(
                                 RetroResult.NoResponseError(null),
                                 LatLng(0.0, 0.0)
                             )

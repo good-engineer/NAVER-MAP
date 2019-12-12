@@ -43,5 +43,5 @@ dependencies {
     implementation "com.squareup.retrofit2:converter-gson:$versions.retrofit"
     implementation "com.google.code.gson:gson:$versions.gson"
     implementation "androidx.lifecycle:lifecycle-extensions:$versions.lifecycle"
-    implementation "androidx.recyclerview:recyclerview:$versions.lifecycle"
+    implementation "androidx.recyclerview:recyclerview:$versions.recyclerview"
 }

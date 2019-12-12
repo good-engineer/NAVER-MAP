@@ -1,7 +1,9 @@
 package com.naver.navermap
 
 import android.graphics.Color
+import android.location.Location
 import android.os.Bundle
+import android.widget.Button
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.naver.maps.geometry.LatLng
@@ -19,10 +21,14 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var locationSource: FusedLocationSource
     val LOCATION_PERMISSION_REQUEST_CODE = 1000
     var mLocationPermissionGranted = false
+    private var currLocation: Location? = null
+    private var pointList: List<LatLng>? = null
+    private var path: PathOverlay? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        setButtonListener()
 
         //map fragment manager
         val fm = supportFragmentManager
@@ -91,19 +97,23 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                         ).show()
                     }
                     is RetroResult.Success -> {
-                        val path = PathOverlay().apply {
+                        path?.map = null
+                        path = PathOverlay().apply {
                             coords = it.map {
                                 LatLng(it.latLng.latitude, it.latLng.longitude)
                             }
                             map = naverMap
                             color = Color.RED
                         }
+                        pointList = it.map {
+                            LatLng(it.latLng.latitude, it.latLng.longitude)
+                        }
                     }
                 }
             }
         }
         //dummy coordination
-        retro.getRetroFitClient(37.5586, 126.9781, 37.5701525, 126.98304)
+        //retro.getRetroFitClient(37.5586, 126.9781, 37.5701525, 126.98304)
 
         val locationOverlay = naverMap.locationOverlay
 
@@ -115,20 +125,23 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         naverMap.addOnLocationChangeListener { location ->
             locationOverlay.apply {
                 position = LatLng(location.latitude, location.longitude)
-
+                currLocation = location
             }
         }
 
         // print 좌표 of a long clicked point, to set the place as Destination
         //TODO: set as destination
         naverMap.setOnMapLongClickListener { _, coord ->
+            retro.getRetroFitClient(
+                currLocation!!.latitude,
+                currLocation!!.longitude,
+                coord.latitude,
+                coord.longitude
+            )
+
             val fm = supportFragmentManager
-            fm.findFragmentById(R.id.container)?.let {
-                fm.beginTransaction().remove(it).commit()
-            }
-            val transaction = fm.beginTransaction().replace(R.id.map_fragment, RouteFragment())
-            transaction.addToBackStack(null)
-            transaction.commit()
+            val searchFragment = fm.findFragmentById(R.id.container) as SearchFragment
+            searchFragment.setText("%.6f, ".format(coord.latitude) + "%.6f".format(coord.longitude))
 
             Toast.makeText(
                 this, "${coord.latitude}, ${coord.longitude}",
@@ -137,6 +150,16 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         }
     }
 
+    fun setButtonListener(){
+        val fm = supportFragmentManager
+        val button = findViewById(R.id.button) as Button
+        button.setOnClickListener{
+            val transaction =
+                fm.beginTransaction().replace(R.id.map_fragment, RouteFragment.newinstance(pointList!!))
+            transaction.addToBackStack(null)
+            transaction.commit()
+        }
+    }
 
 
 }

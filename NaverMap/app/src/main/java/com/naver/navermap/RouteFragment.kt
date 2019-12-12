@@ -11,12 +11,18 @@ import com.naver.navermap.data.Direction
 import com.naver.navermap.data.RouteItem
 import kotlinx.android.synthetic.main.fragment_route.*
 
-class RouteFragment : Fragment() {
-    var routeList: List<RouteItem> =
-        listOf(RouteItem(LatLng(37.4603, 126.95), 10.0, Direction.FRONT))
+class RouteFragment(pointList : List<LatLng>) : Fragment() {
+    //var routeList: List<RouteItem> =
+    //   listOf(RouteItem(LatLng(37.4603, 126.95), 10.0, Direction.FRONT))
+    val routeList: List<RouteItem>
 
-    override fun onActivityCreated(savedInstanceState: Bundle?) {
-        super.onActivityCreated(savedInstanceState)
+    init {
+        val tmpList: MutableList<RouteItem> = mutableListOf()
+        for (i in 0 until pointList.size) {
+            if(i == pointList.size - 1) tmpList.add(RouteItem(pointList[i], 0.0, Direction.FRONT))
+            else tmpList.add(RouteItem(pointList[i], pointList[i].distanceTo(pointList[i + 1]), Direction.FRONT))
+        }
+        routeList = tmpList
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -31,5 +37,11 @@ class RouteFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View? {
         return inflater.inflate(R.layout.fragment_route, container, false)
+    }
+
+    companion object {
+        fun newinstance(pointList : List<LatLng>): RouteFragment {
+            return RouteFragment(pointList)
+        }
     }
 }
