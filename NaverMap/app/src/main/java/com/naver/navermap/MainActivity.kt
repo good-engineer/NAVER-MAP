@@ -83,7 +83,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         //callback 함수 설정
         retro.apply {
             setListener {
-                when (val res = it[0].result) {
+                when (it[0].result) {
                     is RetroResult.NoInternetError -> {
                         Toast.makeText(
                             this@MainActivity, "No Internet",
