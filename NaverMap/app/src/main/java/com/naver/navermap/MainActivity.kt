@@ -35,7 +35,8 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var lastKnownLocation: LatLng
     private lateinit var locationCallback: LocationCallback
     private lateinit var jsonString: String
-    //private var requestingLocationUpdates:Boolean =false
+    //todo:location request button
+    // private var requestingLocationUpdates:Boolean =false
 
     companion object {
         private const val REQUEST_CHECK_SETTINGS = 0x1
