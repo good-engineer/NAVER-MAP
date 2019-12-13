@@ -27,27 +27,27 @@ import com.google.android.gms.tasks.Task
 import com.naver.maps.map.overlay.Marker
 import com.naver.maps.map.util.MarkerIcons
 
-
 class MainActivity : AppCompatActivity(), OnMapReadyCallback {
-    private var naverMap: NaverMap? =null
-    private  lateinit var v: Viterbi
-    //private lateinit var locationSource: FusedLocationSource
+    private var naverMap: NaverMap?=null
+    private lateinit var v: Viterbi
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var locationRequest: LocationRequest
-    //private lateinit var mcurrLocation: Location
+    private lateinit var lastKnownLocation: LatLng
     private lateinit var locationCallback: LocationCallback
+    private lateinit var jsonString: String
+    //private var requestingLocationUpdates:Boolean =false
 
-   // val LOCATION_PERMISSION_REQUEST_CODE = 1000
-    //var mLocationPermissionGranted = false
-    val REQUEST_CHECK_SETTINGS = 0x1
-    var UPDATE_INTERVAL: Long = 10000  // 10 sec
-    var FASTEST_INTERVAL: Long = 1000 // 1 sec
+    companion object {
+        private const val REQUEST_CHECK_SETTINGS = 0x1
+        private const val UPDATE_INTERVAL: Long = 10000  // 10 sec
+        private const val FASTEST_INTERVAL: Long = 1000 // 1 sec
 
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-
 
         //map fragment manager
         val fm = supportFragmentManager
@@ -55,31 +55,29 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             ?: MapFragment.newInstance().also {
                 fm.beginTransaction().add(R.id.map_fragment, it).commit()
             }
+
         //search fragment
         fm.beginTransaction().add(R.id.container, SearchFragment()).commit()
-
         mapFragment.getMapAsync(this)
 
-
-        // change?
-        //locationSource = FusedLocationSource(this, LOCATION_PERMISSION_REQUEST_CODE)
+        //set the viterbi input road data
         val assetManager: AssetManager = resources.assets
         var inputStream: InputStream = assetManager.open("sample.json")
-        val jsonString = inputStream.bufferedReader().use { it.readText() }
-         v = Viterbi(jsonString)
+        jsonString = inputStream.bufferedReader().use { it.readText() }
+        v = Viterbi(jsonString)
 
+        //location periodic update
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
-
         createLocationRequest()
         createLocationCallBack()
-
     }
-
 
     override fun onResume() {
         super.onResume()
-        startLocationUpdates()
+        //if(requestingLocationUpdates)
+            startLocationUpdates()
     }
+
     override fun onPause() {
         super.onPause()
         stopLocationUpdates()
@@ -91,7 +89,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     }
 
     private fun createLocationRequest() {
-
         // location request
         locationRequest = LocationRequest.create()
         locationRequest.run {
@@ -99,12 +96,10 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             setInterval(UPDATE_INTERVAL)
             setFastestInterval(FASTEST_INTERVAL)
         }
-
         // location setting request builder
         val builder = LocationSettingsRequest.Builder()
         builder.addLocationRequest(locationRequest)
         val locationSettingsRequest = builder.build()
-        //Toast.makeText(this, "location setting request builder", Toast.LENGTH_LONG).show()
 
         // initialize location service object
         val settingsClient = LocationServices.getSettingsClient(this)
@@ -134,90 +129,84 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     }
 
     private fun createLocationCallBack() {
-       locationCallback = object : LocationCallback() {
-           override fun onLocationResult(Result: LocationResult?) {
-               Result ?: return
-
-               displayLocation(Result.lastLocation)
-
-               for (location in Result.locations) {
-                   // Update UI with location data
-                   // ...
-                   displayLocation(location)
-               }
-           }
+        locationCallback = object : LocationCallback() {
+            override fun onLocationResult(Result: LocationResult?) {
+                Result ?: return
+                for (location in Result.locations) {
+                    // Update UI with location data
+                    displayLocation(location)
+                }
+            }
         }
 
     }
 
-
     protected fun startLocationUpdates() {
-        Toast.makeText(this, "startupdatelocation", Toast.LENGTH_LONG).show()
-
         if (checkPermission()) {
             fusedLocationClient
                 .requestLocationUpdates(locationRequest, locationCallback, Looper.myLooper())
         }
     }
 
-
     private fun displayLocation(location: Location) {
-        //Toast.makeText(this, "display location ", Toast.LENGTH_LONG).show()
         var currLocation: LatLng
-
 
         if (location != null) {
 
             naverMap?.let {
                 //show raw location input
-                //show on map
-
                 val marker = Marker()
                 marker.icon = MarkerIcons.BLACK
                 marker.iconTintColor = Color.RED
                 marker.width = 40
                 marker.height = 50
                 marker.position = LatLng(location)
-                marker.map=it
-               // Toast.makeText(this, "display location marker", Toast.LENGTH_LONG).show()
-
+                marker.map = it
                 //get location mapped to road
-                currLocation = v!!.run {
+                lastKnownLocation = v!!.run {
                     getMapMatchingLocation(location)
                 }
-                val coord = currLocation
+                //show on map
+                val coord = lastKnownLocation
                 val locationOverlay = it.locationOverlay
                 locationOverlay.isVisible = true
                 locationOverlay.position = coord
                 locationOverlay.bearing = location.bearing
                 it.moveCamera(CameraUpdate.scrollTo(coord))
-                //Toast.makeText(this, "display mapmatching result", Toast.LENGTH_LONG).show()
+
+                //TODO: if lastKnownLocation and currRoad
+                // distance is < 10 m send change direction Alarm
+
             }
 
-            //if location < 5 m to end of path road length
-            //projection
         }
 
     }
+
 
     private fun checkPermission(): Boolean {
         val permissions = arrayOf(
             android.Manifest.permission.ACCESS_FINE_LOCATION,
             android.Manifest.permission.ACCESS_COARSE_LOCATION
         )
-        for (permission in permissions) {
-            if (ContextCompat.checkSelfPermission(
-                    this,
-                    permission
-                ) != PackageManager.PERMISSION_GRANTED
-            ) {
-                ActivityCompat.requestPermissions(
-                    this,
-                    permissions,
-                    1
-                )
-
-            }
+        //check if permission is granted
+        if (ContextCompat.checkSelfPermission(
+                this,
+                permissions[0]
+            )
+            != PackageManager.PERMISSION_GRANTED
+            && ContextCompat.checkSelfPermission(
+                this,
+                permissions[1]
+            )
+            != PackageManager.PERMISSION_GRANTED
+        ) {
+            // Permission is not granted, so request
+            ActivityCompat.requestPermissions(
+                this,
+                permissions,
+                1
+            )
         }
         return true
     }
@@ -239,15 +228,10 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         fusedLocationClient.removeLocationUpdates(locationCallback)
     }
 
-     override fun onMapReady(naverMap: NaverMap) {
-        //Toast.makeText(this, "on map ready!", Toast.LENGTH_LONG).show()
-
+    override fun onMapReady(naverMap: NaverMap) {
         //map camera bound
-         this.naverMap=naverMap
-
+        this.naverMap = naverMap
         naverMap.extent = LatLngBounds(LatLng(37.4460, 126.933), LatLng(37.475, 126.982))
-
-        //naverMap.locationSource = locationSource
 
         // map fragment settings
         naverMap?.let {
@@ -259,7 +243,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             }
             it.locationTrackingMode = LocationTrackingMode.Face
         }
-         
 
         val retro = RetroFitAPI.getInstance(applicationContext)
         //callback 함수 설정
@@ -293,6 +276,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                 }
             }
         }
+
         //dummy coordination
         retro.getRetroFitClient(37.5586, 126.9781, 37.5701525, 126.98304)
 
@@ -304,11 +288,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             ).show()
         }
 
-
-        //
-        val assetManager: AssetManager = resources.assets
-        var inputStream: InputStream = assetManager.open("sample.json")
-        val jsonString = inputStream.bufferedReader().use { it.readText() }
         val jArray = JSONArray(jsonString)
         for (i in 0 until jArray.length()) {
             val road = jArray.getJSONObject(i)
@@ -328,51 +307,5 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                 color = Color.GREEN
             }
         }
-
-
     }
-
-
-/*
-
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<String>,
-        grantResults: IntArray
-    ) {
-        if (locationSource.onRequestPermissionsResult(
-                requestCode, permissions,
-                grantResults
-            )
-        ) {
-            mLocationPermissionGranted = true
-            Toast.makeText(this, "Permission Granted!", Toast.LENGTH_LONG).show()
-            return
-        }
-        Toast.makeText(this, "Permission Denied!", Toast.LENGTH_LONG).show()
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-
-    }*/
 }
-
-
-/*//TODO: set as destination
-// print 좌표 of a long clicked point, to set the place as Destination
-naverMap.setOnMapLongClickListener { _, coord ->
-    Toast.makeText(
-        this, "${coord.latitude}, ${coord.longitude}",
-        Toast.LENGTH_SHORT
-    ).show()
-}*/
-
-// print location if location change happens
-/* naverMap.addOnLocationChangeListener { location ->
-    locationOverlay.apply {
-        position = LatLng(location.latitude, location.longitude)
-
-    }
-
-
-}*/
-
-
