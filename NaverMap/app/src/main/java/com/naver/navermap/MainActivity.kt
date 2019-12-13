@@ -40,8 +40,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     }
 
 
-
-
     override fun onRequestPermissionsResult(
         requestCode: Int,
         permissions: Array<String>,
@@ -114,63 +112,37 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                 this, "${coord.latitude}, ${coord.longitude}",
                 Toast.LENGTH_SHORT
             ).show()
-        val locationOverlay = naverMap.locationOverlay
+            val locationOverlay = naverMap.locationOverlay
 
-        if (mLocationPermissionGranted) {
-            naverMap.uiSettings.isLocationButtonEnabled = true
-            //locationOverlay.isVisible = true
-        }
+            if (mLocationPermissionGranted) {
+                naverMap.uiSettings.isLocationButtonEnabled = true
+                //locationOverlay.isVisible = true
+            }
 
 
-        naverMap.locationTrackingMode = LocationTrackingMode.Face
+            naverMap.locationTrackingMode = LocationTrackingMode.Face
 
-        // print location if location change happens
-        //TODO: algorithm > compare current position to road data
-        // TODO: Show new position
-        naverMap.addOnLocationChangeListener { location ->
-            locationOverlay.apply {
-                position = LatLng(location.latitude, location.longitude)
+            // print location if location change happens
+            //TODO: algorithm > compare current position to road data
+            // TODO: Show new position
+            naverMap.addOnLocationChangeListener { location ->
+                locationOverlay.apply {
+                    position = LatLng(location.latitude, location.longitude)
 
+                }
+            }
+
+            // print 좌표 of a long clicked point, to set the place as Destination
+            //TODO: set as destination
+            naverMap.setOnMapLongClickListener { _, coord ->
+                Toast.makeText(
+                    this, "${coord.latitude}, ${coord.longitude}",
+                    Toast.LENGTH_SHORT
+                ).show()
             }
         }
 
-        // print 좌표 of a long clicked point, to set the place as Destination
-        //TODO: set as destination
-        naverMap.setOnMapLongClickListener { _, coord ->
-            Toast.makeText(
-                this, "${coord.latitude}, ${coord.longitude}",
-                Toast.LENGTH_SHORT
-            ).show()
-        }
+
     }
-
-
-
 }
-
-//to use source location
-
-/*private fun checkPermission() {
-
-     //check if permission is granted
-     if (ContextCompat.checkSelfPermission(
-             this,
-             Manifest.permission.ACCESS_FINE_LOCATION
-         )
-         != PackageManager.PERMISSION_GRANTED
-         && ContextCompat.checkSelfPermission(
-             this,
-             Manifest.permission.ACCESS_COARSE_LOCATION
-         )
-         != PackageManager.PERMISSION_GRANTED
-     ) {
-         // Permission is not granted, so request
-         ActivityCompat.requestPermissions(
-             this,
-             PERMISSIONS,
-             REQUEST
-         )
-
-     }
- }*/
 
