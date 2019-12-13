@@ -4,12 +4,13 @@
     android:layout_height="match_parent">
 
     <EditText
-        android:id="@+id/search"
+        android:id="@+id/search_text"
         android:background="@android:color/background_light"
         android:layout_height="35dp"
         android:layout_width="match_parent"
         android:hint="@string/search_message"
         android:imeOptions="actionDone"
-        android:singleLine="true" />
+        android:singleLine="true"
+        android:inputType="text" />
 
 </LinearLayout>
