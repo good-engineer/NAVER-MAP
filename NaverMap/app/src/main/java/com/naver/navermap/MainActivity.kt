@@ -164,7 +164,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     }
 
     private fun displayLocation(location: Location) {
-        var currLocation: LatLng
+        currLocation = location
 
         if (location != null) {
 
