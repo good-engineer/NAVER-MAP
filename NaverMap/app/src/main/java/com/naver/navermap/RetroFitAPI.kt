@@ -18,14 +18,15 @@ class RetroFitAPI(val applicationContext: Application) {
         @Volatile
         private var INSTANCE: RetroFitAPI? = null
 
-        fun getInstance(applcationContext: Application): RetroFitAPI {
+        fun getInstance(applicationContext: Application): RetroFitAPI {
             return INSTANCE ?: synchronized(this) {
-                RetroFitAPI(applcationContext).also { INSTANCE = it }
+                RetroFitAPI(applicationContext).also { INSTANCE = it }
             }
         }
     }
 
-    init {
+    constructor(context: Context){
+        this.context = context
         val retrofit = Retrofit.Builder()
             .baseUrl(applicationContext.getString(R.string.osrm_url))
             .addConverterFactory(GsonConverterFactory.create())

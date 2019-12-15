@@ -1,3 +1,4 @@
+*.jason
 *.iml
 .gradle
 /local.properties
