@@ -7,19 +7,15 @@ import com.naver.navermap.data.cartProject
 import com.naver.navermap.data.cartToLatLng
 import com.naver.navermap.data.latLngToCart
 import org.json.JSONArray
-import java.sql.Time
 import java.util.*
 import kotlin.math.*
 
-
-//TODO
 /*implement viterbi algorithm
 1. set current location as initial state and find connected roads
 2. get a sequence of location
 3. calculate emission probability
 4. find the best path
 5. update state
-
 */
 
 data class TimeStep(

@@ -13,6 +13,7 @@ import android.location.Location
 import android.os.Build
 import android.os.Bundle
 import android.os.Looper
+import android.util.Log
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
@@ -24,13 +25,14 @@ import com.google.android.gms.location.*
 import com.google.android.gms.tasks.Task
 import com.naver.maps.geometry.LatLng
 import com.naver.maps.geometry.LatLngBounds
-import com.naver.maps.map.*
+import com.naver.maps.map.MapFragment
+import com.naver.maps.map.NaverMap
+import com.naver.maps.map.OnMapReadyCallback
 import com.naver.maps.map.overlay.Marker
 import com.naver.maps.map.overlay.PathOverlay
 import com.naver.maps.map.util.FusedLocationSource
 import com.naver.maps.map.util.MarkerIcons
-import com.naver.navermap.data.Direction
-import com.naver.navermap.data.RetroResult
+import com.naver.navermap.data.*
 import org.json.JSONArray
 import java.io.InputStream
 
@@ -38,9 +40,10 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var locationSource: FusedLocationSource
     var mLocationPermissionGranted = false
     private var currLocation: Location? = null
+    private var routeList: List<Pair<RouteItem, Boolean>>? = null
     private var path: PathOverlay? = null
     val fm = supportFragmentManager
-    private var naverMap: NaverMap?=null
+    private var naverMap: NaverMap? = null
     private lateinit var v: Viterbi
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var locationRequest: LocationRequest
@@ -90,7 +93,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     override fun onResume() {
         super.onResume()
         //if(requestingLocationUpdates)
-            startLocationUpdates()
+        startLocationUpdates()
     }
 
     override fun onPause() {
@@ -163,6 +166,41 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         }
     }
 
+    private fun notifyDirection(location: LatLng) {
+        //TODO: if lastKnownLocation and currRoad
+        // distance is < 10 m send change direction Alarm
+        routeList?.let {
+            var dist = 10.0
+            var item: RouteItem? = null
+            var index = 0
+            for (i in 1 until it.size) {
+                if(!it[i].second) {
+                    val tmpDist =
+                        it[i].first.source.distanceTo(location)
+                    if (tmpDist < 10.0) {
+                        if (dist > tmpDist) {
+                            dist = tmpDist
+                            item = it[i].first
+                            index = i
+                        }
+                    }
+                }
+            }
+            if(index != 0) {
+                routeList = it.map {
+                    if (it.first.equals(item))
+                        Pair(it.first, true)
+                    else it
+                }
+                sendNotification(it[index].first.direction)
+            }
+            else if(index == it.size - 1) {
+                routeList = null
+                path?.map = null
+            }
+        } ?: return
+    }
+
     private fun displayLocation(location: Location) {
         currLocation = location
 
@@ -187,15 +225,11 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                 locationOverlay.isVisible = true
                 locationOverlay.position = coord
                 locationOverlay.bearing = location.bearing
-                it.moveCamera(CameraUpdate.scrollTo(coord))
+                //it.moveCamera(CameraUpdate.scrollTo(coord))
 
-                //TODO: if lastKnownLocation and currRoad
-                // distance is < 10 m send change direction Alarm
-
+                notifyDirection(lastKnownLocation)
             }
-
         }
-
     }
 
 
@@ -237,6 +271,15 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                 startLocationUpdates()
             }
         }
+        if (locationSource.onRequestPermissionsResult(
+                requestCode, permissions,
+                grantResults
+            )
+        ) {
+            mLocationPermissionGranted = true
+            Toast.makeText(this, "Permission Granted!", Toast.LENGTH_LONG).show()
+            return
+        }
     }
 
     private fun stopLocationUpdates() {
@@ -247,6 +290,37 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         fm.findFragmentById(R.id.route_fragment)?.let {
             fm.beginTransaction().remove(it).commit()
         } ?: super.onBackPressed()
+    }
+
+    private fun getRouteList(pointList: List<LatLng>): List<RouteItem> {
+        val tmpList: MutableList<RouteItem> = mutableListOf()
+        fun getDirection(start: LatLng, middle: LatLng, end: LatLng): Direction {
+            val cos =
+                vecCos(start, middle, middle, end)
+            val direct = dot(outerProduct(start, middle, middle, end), latLngToCart(middle))
+            if (cos > 0.5) return Direction.FRONT
+            else if (cos < -0.5) return Direction.BACK
+            else {
+                if (direct > 0) return Direction.LEFT
+                else return Direction.RIGHT
+            }
+        }
+        for (i in 0 until pointList.size) {
+            //when last position (last position, 0, no movement)
+            if (i == pointList.size - 1) tmpList.add(RouteItem(pointList[i], 0.0, Direction.NIL))
+            else tmpList.add(
+                RouteItem(
+                    pointList[i],
+                    pointList[i].distanceTo(pointList[i + 1]),
+                    if (i == 0) Direction.FRONT
+                    else {
+                        getDirection(pointList[i - 1], pointList[i], pointList[i + 1])
+                    }
+                )
+            )
+        }
+        routeList = tmpList.map { Pair(it, false) }
+        return tmpList
     }
 
     override fun onMapReady(naverMap: NaverMap) {
@@ -297,9 +371,16 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                         }
 
                         fm.beginTransaction()
-                            .add(R.id.route_fragment, RouteFragment.newInstance(it.map {
-                                LatLng(it.latLng.latitude, it.latLng.longitude)
-                            }))
+                            .add(
+                                R.id.route_fragment, RouteFragment.newInstance(
+                                    getRouteList(it.map {
+                                        LatLng(
+                                            it.latLng.latitude,
+                                            it.latLng.longitude
+                                        )
+                                    })
+                                )
+                            )
                             .commit()
                     }
                 }
@@ -363,7 +444,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         var textContent = when (direction) {
             Direction.FRONT -> "Keep going straight!"
             Direction.LEFT -> "Turn left in 10 meters!"
-            Direction.NIL -> "No direction is available!"
+            Direction.NIL -> "Destination Arrived"
             Direction.RIGHT -> "Turn right in 10 meters!"
             Direction.BACK -> "Turn back!"
         }
