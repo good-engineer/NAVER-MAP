@@ -7,41 +7,32 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentSender
 import android.content.pm.PackageManager
+import android.content.res.AssetManager
 import android.graphics.Color
-import android.graphics.drawable.Icon
 import android.location.Location
 import android.os.Build
 import android.os.Bundle
+import android.os.Looper
 import android.widget.Toast
-import android.content.res.AssetManager
-import com.naver.maps.geometry.LatLng
-import com.naver.maps.geometry.LatLngBounds
-import com.naver.maps.map.*
-import com.naver.maps.map.overlay.PathOverlay
-import org.json.JSONArray
-import java.io.InputStream
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
-import com.naver.maps.geometry.LatLng
-import com.naver.maps.geometry.LatLngBounds
-import com.naver.maps.map.LocationTrackingMode
-import com.naver.maps.map.MapFragment
-import com.naver.maps.map.NaverMap
-import com.naver.maps.map.OnMapReadyCallback
-import com.naver.maps.map.overlay.PathOverlay
-import com.naver.maps.map.util.FusedLocationSource
-import com.naver.navermap.data.Direction
-import com.naver.navermap.data.RetroResult
-import android.location.Location
-import android.os.Looper
-import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.location.*
 import com.google.android.gms.tasks.Task
+import com.naver.maps.geometry.LatLng
+import com.naver.maps.geometry.LatLngBounds
+import com.naver.maps.map.*
 import com.naver.maps.map.overlay.Marker
+import com.naver.maps.map.overlay.PathOverlay
+import com.naver.maps.map.util.FusedLocationSource
 import com.naver.maps.map.util.MarkerIcons
+import com.naver.navermap.data.Direction
+import com.naver.navermap.data.RetroResult
+import org.json.JSONArray
+import java.io.InputStream
 
 class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var locationSource: FusedLocationSource
@@ -82,6 +73,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         //search fragment
         fm.beginTransaction().add(R.id.container, SearchFragment()).commit()
         mapFragment.getMapAsync(this)
+        locationSource = FusedLocationSource(this, LOCATION_PERMISSION_REQUEST_CODE)
 
         //set the viterbi input road data
         val assetManager: AssetManager = resources.assets
@@ -249,6 +241,8 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
     private fun stopLocationUpdates() {
         fusedLocationClient.removeLocationUpdates(locationCallback)
+    }
+
     override fun onBackPressed() {
         fm.findFragmentById(R.id.route_fragment)?.let {
             fm.beginTransaction().remove(it).commit()
@@ -262,9 +256,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
         naverMap.locationSource = locationSource
 
-        //map camera bound
-        naverMap.extent = LatLngBounds(LatLng(37.4460, 126.933), LatLng(37.475, 126.982))
-
         // map fragment settings
         naverMap?.let {
             val uiSettings = it.uiSettings.apply {
@@ -273,7 +264,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                 isIndoorLevelPickerEnabled = true
                 isZoomControlEnabled = true
             }
-            it.locationTrackingMode = LocationTrackingMode.Face
         }
 
         val retro = RetroFitAPI.getInstance(application)
@@ -316,17 +306,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             }
         }
 
-        // print 좌표 of a long clicked point, to set the place as Destination
-        naverMap.setOnMapLongClickListener { _, coord ->
-            Toast.makeText(
-                this, "${coord.latitude}, ${coord.longitude}",
-                Toast.LENGTH_SHORT
-            ).show()
-            naverMap.locationTrackingMode = LocationTrackingMode.Face
-
-
-        }
-
         val jArray = JSONArray(jsonString)
         for (i in 0 until jArray.length()) {
             val road = jArray.getJSONObject(i)
@@ -347,27 +326,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             }
         }
         val locationOverlay = naverMap.locationOverlay
-
-        naverMap.locationTrackingMode = LocationTrackingMode.Face
-
-        // print location if location change happens
-        //TODO: algorithm > compare current position to road data
-        // TODO: Show new position
-        naverMap.addOnLocationChangeListener { location ->
-            locationOverlay.apply {
-                position = LatLng(location.latitude, location.longitude)
-            }
-            currLocation = location
-        }
-
-        // print 좌표 of a long clicked point, to set the place as Destination
-        //TODO: set as destination
-        naverMap.setOnMapLongClickListener { _, coord ->
-            Toast.makeText(
-                this, "${coord.latitude}, ${coord.longitude}",
-                Toast.LENGTH_SHORT
-            ).show()
-        }
 
         naverMap.setOnMapLongClickListener { _, coord ->
             currLocation?.let {

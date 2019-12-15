@@ -3,6 +3,9 @@ package com.naver.navermap
 import android.location.Location
 import com.naver.maps.geometry.LatLng
 import com.naver.maps.geometry.LatLngBounds
+import com.naver.navermap.data.cartProject
+import com.naver.navermap.data.cartToLatLng
+import com.naver.navermap.data.latLngToCart
 import org.json.JSONArray
 import java.sql.Time
 import java.util.*
@@ -19,78 +22,15 @@ import kotlin.math.*
 
 */
 
-data class Coordination(
-    val x: Double, val y: Double, val z: Double
-)
-
 data class TimeStep(
     val location: LatLng,
     val candidates: List<RoadState>,
     val states: List<Pair<RoadState, Double>>
 )
 
-fun dot(coord1: Coordination, coord2: Coordination): Double {
-    return coord1.x * coord2.x + coord1.y * coord2.y + coord1.z * coord2.z
-}
-
-fun plusCoord(coord1: Coordination, coord2: Coordination): Coordination {
-    return Coordination(coord1.x + coord2.x, coord1.y + coord2.y, coord1.z + coord2.z)
-}
-
-fun sizeCoord(coord: Coordination): Double {
-    return sqrt(dot(coord, coord))
-}
-
-fun cardProject(
-    endPoint1: Coordination,
-    endPoint2: Coordination,
-    location: Coordination
-): Coordination {
-    val R = 6371000
-    val line = Coordination(
-        endPoint2.x - endPoint1.x,
-        endPoint2.y - endPoint1.y,
-        endPoint2.z - endPoint1.z
-    )
-    val inner =
-        dot(
-            Coordination(
-                location.x - endPoint1.x,
-                location.y - endPoint1.y,
-                location.z - endPoint1.z
-            ), line
-        )
-    val lineSize = dot(line, line)
-    val proj = plusCoord(
-        endPoint1,
-        Coordination(
-            line.x * inner / lineSize,
-            line.y * inner / lineSize,
-            line.z * inner / lineSize
-        )
-    )
-    val projSize = sizeCoord(proj)
-    return Coordination(proj.x * R / projSize, proj.y * R / projSize, proj.z * R / projSize)
-}
-
-fun latLngToCart(location: LatLng): Coordination {
-    val R = 6371000
-    val x = R * cos(location.latitude * (2 * PI / 360)) * cos(location.longitude * (2 * PI / 360))
-    val y = R * cos(location.latitude * (2 * PI / 360)) * sin(location.longitude * (2 * PI / 360))
-    val z = R * sin(location.latitude * (2 * PI / 360))
-    return Coordination(x, y, z)
-}
-
-fun cartToLatLng(coord: Coordination): LatLng {
-    val R = 6371000
-    val lat = asin(coord.z / R) * (360 / (2 * PI))
-    val lon = atan2(coord.y, coord.x) * (360 / (2 * PI))
-    return (LatLng(lat, lon))
-}
-
 fun pointToLineProject(road: RoadState, location: LatLng): LatLng {
     val point = cartToLatLng(
-        cardProject(
+        cartProject(
             latLngToCart(road.startPoint),
             latLngToCart(road.endPoint),
             latLngToCart(location)
