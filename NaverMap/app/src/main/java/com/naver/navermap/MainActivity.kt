@@ -1,9 +1,16 @@
 package com.naver.navermap
 
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
+import android.content.Context
+import android.content.Intent
 import android.content.IntentSender
 import android.content.pm.PackageManager
 import android.graphics.Color
+import android.graphics.drawable.Icon
 import android.location.Location
+import android.os.Build
 import android.os.Bundle
 import android.widget.Toast
 import android.content.res.AssetManager
@@ -14,6 +21,8 @@ import com.naver.maps.map.overlay.PathOverlay
 import org.json.JSONArray
 import java.io.InputStream
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
 import com.naver.maps.geometry.LatLng
 import com.naver.maps.geometry.LatLngBounds
 import com.naver.maps.map.LocationTrackingMode
@@ -22,6 +31,7 @@ import com.naver.maps.map.NaverMap
 import com.naver.maps.map.OnMapReadyCallback
 import com.naver.maps.map.overlay.PathOverlay
 import com.naver.maps.map.util.FusedLocationSource
+import com.naver.navermap.data.Direction
 import com.naver.navermap.data.RetroResult
 import android.location.Location
 import android.os.Looper
@@ -60,6 +70,8 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        createNotificationChannel()
 
         //map fragment manager
         val mapFragment = fm.findFragmentById(R.id.map_fragment) as MapFragment?
@@ -310,34 +322,9 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                 this, "${coord.latitude}, ${coord.longitude}",
                 Toast.LENGTH_SHORT
             ).show()
-            val locationOverlay = naverMap.locationOverlay
-
-            if (mLocationPermissionGranted) {
-                naverMap.uiSettings.isLocationButtonEnabled = true
-                //locationOverlay.isVisible = true
-            }
-
-
             naverMap.locationTrackingMode = LocationTrackingMode.Face
 
-            // print location if location change happens
-            //TODO: algorithm > compare current position to road data
-            // TODO: Show new position
-            naverMap.addOnLocationChangeListener { location ->
-                locationOverlay.apply {
-                    position = LatLng(location.latitude, location.longitude)
 
-                }
-            }
-
-            // print 좌표 of a long clicked point, to set the place as Destination
-            //TODO: set as destination
-            naverMap.setOnMapLongClickListener { _, coord ->
-                Toast.makeText(
-                    this, "${coord.latitude}, ${coord.longitude}",
-                    Toast.LENGTH_SHORT
-                ).show()
-            }
         }
 
         val jArray = JSONArray(jsonString)
@@ -403,6 +390,64 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             ).show()
         }
 
+
+    }
+
+    private fun sendNotification(direction: Direction) {
+
+        var icon = when (direction) {
+            Direction.FRONT -> R.drawable.direction_front
+            Direction.LEFT -> R.drawable.direction_left
+            Direction.NIL -> R.drawable.direction_nil
+            Direction.RIGHT -> R.drawable.direction_right
+            Direction.BACK -> R.drawable.direction_back
+        }
+        var textContent = when (direction) {
+            Direction.FRONT -> "Keep going straight!"
+            Direction.LEFT -> "Turn left in 10 meters!"
+            Direction.NIL -> "No direction is available!"
+            Direction.RIGHT -> "Turn right in 10 meters!"
+            Direction.BACK -> "Turn back!"
+        }
+
+        // Create an explicit intent
+        val intent = Intent(this, RouteFragment::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        }
+        val pendingIntent: PendingIntent = PendingIntent.getActivity(this, 0, intent, 0)
+
+        //create notification
+        var builder = NotificationCompat.Builder(this, "1")
+            .setSmallIcon(icon)
+            .setContentTitle("Direction Change!")
+            .setContentText(textContent)
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            // the intent that will fire when the user taps the notification
+            .setContentIntent(pendingIntent)
+            .setAutoCancel(true)
+
+        //send notification
+        with(NotificationManagerCompat.from(this)) {
+            notify(1, builder.build())
+        }
+    }
+
+    private fun createNotificationChannel() {
+        // Create the NotificationChannel, but only on API 26+ because
+        // the NotificationChannel class is new and not in the support library
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val name = "channel1"
+            val descriptionText = "this is channel 1"
+            val importance = NotificationManager.IMPORTANCE_DEFAULT
+            val channel1 = NotificationChannel("1", name, importance).apply {
+                description = descriptionText
+            }
+            channel1.vibrationPattern = longArrayOf(1000, 1000, 1000, 1000, 1000)
+            // Register the channel with the system
+            val notificationManager: NotificationManager =
+                getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            notificationManager.createNotificationChannel(channel1)
+        }
     }
 }
 
