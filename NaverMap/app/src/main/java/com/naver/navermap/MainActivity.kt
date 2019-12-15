@@ -1,6 +1,10 @@
 package com.naver.navermap
 
-import android.content.IntentSender
+import android.app.ActivityManager
+import android.content.ComponentName
+import android.content.Context
+import android.content.Intent
+import android.content.ServiceConnection
 import android.content.pm.PackageManager
 import android.graphics.Color
 import android.os.Bundle
@@ -18,31 +22,45 @@ import com.naver.maps.map.NaverMap
 import com.naver.maps.map.OnMapReadyCallback
 import com.naver.navermap.data.RetroResult
 import android.location.Location
-import android.os.Looper
+import android.os.Binder
+import android.os.IBinder
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.location.*
-import com.google.android.gms.tasks.Task
 import com.naver.maps.map.overlay.Marker
 import com.naver.maps.map.util.MarkerIcons
 
 class MainActivity : AppCompatActivity(), OnMapReadyCallback {
-    private var naverMap: NaverMap?=null
+    private lateinit var naverMap: NaverMap
     private lateinit var v: Viterbi
-    private lateinit var fusedLocationClient: FusedLocationProviderClient
-    private lateinit var locationRequest: LocationRequest
+    //private lateinit var fusedLocationClient: FusedLocationProviderClient
+   // private lateinit var locationRequest: LocationRequest
     private lateinit var lastKnownLocation: LatLng
     private lateinit var locationCallback: LocationCallback
     private lateinit var jsonString: String
+    private lateinit var locationService: MyLocationService
+    private var mBound: Boolean = false
     //todo:location request button
     // private var requestingLocationUpdates:Boolean =false
 
-    companion object {
+   companion object {
         private const val REQUEST_CHECK_SETTINGS = 0x1
-        private const val UPDATE_INTERVAL: Long = 10000  // 10 sec
-        private const val FASTEST_INTERVAL: Long = 1000 // 1 sec
+        //private const val UPDATE_INTERVAL: Long = 10000  // 10 sec
+        //private const val FASTEST_INTERVAL: Long = 1000 // 1 sec
 
+    }
+    private val connection = object : ServiceConnection {
+
+        override fun onServiceConnected(className: ComponentName, service: IBinder) {
+            // We've bound to LocalService, cast the IBinder and get LocalService instance
+            val binder = service as MyLocationService.LocationServiceBinder
+            locationService = binder.getService()
+            mBound = true
+        }
+
+        override fun onServiceDisconnected(arg0: ComponentName) {
+            mBound = false
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -68,25 +86,60 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         v = Viterbi(jsonString)
 
         //location periodic update
-        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
+        /*fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
         createLocationRequest()
-        createLocationCallBack()
+        createLocationCallBack()*/
+        val serviceClass = MyLocationService::class.java
+        val intent = Intent(applicationContext,serviceClass)
+        //&& checkPermission()
+        if(serviceIsNotRunning(serviceClass) )
+            startService(intent)
+
     }
 
+    @Suppress("DEPRECATION")
+    private fun serviceIsNotRunning(serviceClass: Class<*>): Boolean {
+        val activityManager = getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
+
+
+        for (service in activityManager.getRunningServices(Integer.MAX_VALUE)) {
+            if (serviceClass.name == service.service.className) {
+                return true
+            }
+
+        }
+        return false
+    }
+
+    override fun onStart() {
+        super.onStart()
+        // Bind to Service
+        Intent(this, MyLocationService::class.java).also { intent ->
+            bindService(intent, connection, Context.BIND_AUTO_CREATE)
+        }
+    }
+
+    override fun onStop() {
+        super.onStop()
+        unbindService(connection)
+        mBound = false
+    }
+
+    /*
     override fun onResume() {
         super.onResume()
         //if(requestingLocationUpdates)
-            startLocationUpdates()
+           // startLocationUpdates()
     }
 
     override fun onPause() {
         super.onPause()
-        stopLocationUpdates()
+        //stopLocationUpdates()
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        fusedLocationClient.removeLocationUpdates(locationCallback)
+        //fusedLocationClient.removeLocationUpdates(locationCallback)
     }
 
     private fun createLocationRequest() {
@@ -148,34 +201,38 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                 .requestLocationUpdates(locationRequest, locationCallback, Looper.myLooper())
         }
     }
-
+*/
     private fun displayLocation(location: Location) {
         var currLocation: LatLng
 
-        if (location != null) {
+        if ((location!= null) && (naverMap != null)) {
 
-            naverMap?.let {
+            naverMap.let {
                 //show raw location input
-                val marker = Marker()
-                marker.icon = MarkerIcons.BLACK
-                marker.iconTintColor = Color.RED
-                marker.width = 40
-                marker.height = 50
-                marker.position = LatLng(location)
-                marker.map = it
+                Marker() .apply {
+                    icon = MarkerIcons.BLACK
+                    iconTintColor = Color.RED
+                    width = 40
+                    height = 50
+                    position = LatLng(location)
+                    map = it
+                }
+
                 //get location mapped to road
-                lastKnownLocation = v!!.run {
+                lastKnownLocation = v.run {
                     getMapMatchingLocation(location)
                 }
                 //show on map
                 val coord = lastKnownLocation
-                val locationOverlay = it.locationOverlay
-                locationOverlay.isVisible = true
-                locationOverlay.position = coord
-                locationOverlay.bearing = location.bearing
+                it.locationOverlay.apply {
+                    isVisible = true
+                    position = coord
+                    bearing = location.bearing
+                }
                 it.moveCamera(CameraUpdate.scrollTo(coord))
+                    //TODO: if lastKnownLocation and currRoad
 
-                //TODO: if lastKnownLocation and currRoad
+
                 // distance is < 10 m send change direction Alarm
 
             }
@@ -183,7 +240,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         }
 
     }
-
 
     private fun checkPermission(): Boolean {
         val permissions = arrayOf(
@@ -208,8 +264,9 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                 permissions,
                 1
             )
+            return true
         }
-        return true
+        return false
     }
 
     override fun onRequestPermissionsResult(
@@ -220,14 +277,15 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == 1) {
             if (permissions[0] == android.Manifest.permission.ACCESS_FINE_LOCATION) {
-                startLocationUpdates()
+                //startLocationUpdates()
+                return
             }
         }
     }
 
-    private fun stopLocationUpdates() {
-        fusedLocationClient.removeLocationUpdates(locationCallback)
-    }
+   // private fun stopLocationUpdates() {
+       // fusedLocationClient.removeLocationUpdates(locationCallback)
+    //}
 
     override fun onMapReady(naverMap: NaverMap) {
         //map camera bound
@@ -243,6 +301,11 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                 isZoomControlEnabled = true
             }
             it.locationTrackingMode = LocationTrackingMode.Face
+        }
+
+        //TODO: get location from service
+        if (checkPermission()){
+            displayLocation(locationService.StartLocationUpdate())
         }
 
         val retro = RetroFitAPI.getInstance(applicationContext)
@@ -309,4 +372,8 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             }
         }
     }
+
+
 }
+
+
