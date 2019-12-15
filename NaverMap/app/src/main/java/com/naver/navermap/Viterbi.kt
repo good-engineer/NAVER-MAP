@@ -258,45 +258,39 @@ class Viterbi(jsonString: String) {
 
         // d : distance from currlocation to new coming location
         var d: Double = 0.0
-   if (currStep!=null) {
-       d = currStep!!.location.let { pos.distanceTo(it) }
-       //according to new location's accuracy and predicted distance x
-       // if the new location is too far so the location is not valid
-       // set a counter
-       if (d > ((2 * location.accuracy) + x+5)) {
-           return true
-       }
+        if (currStep != null) {
+            d = currStep!!.location.let { pos.distanceTo(it) }
+            //according to new location's accuracy and predicted distance x
+            // if the new location is too far so the location is not valid
+            // set a counter
+            if (d > ((2 * location.accuracy) + x + 5)) {
+                return true
+            }
 
-      }
+        }
         return false
     }
 
     fun getMapMatchingLocation(inputLocation: Location): LatLng {
         // counter :the number of false location
 
-        var currRoad: RoadState? = null
         val location = LatLng(inputLocation.latitude, inputLocation.longitude)
 
-        if (inputLocation.hasAccuracy() ){ //&& inputLocation.hasSpeed()) {
+        if (inputLocation.hasAccuracy()) { //&& inputLocation.hasSpeed()) {
             //check if location in valid
             //
-             if (inputLocation.accuracy> 10)
-               if (isNotValid(inputLocation)){
-                counter +=1
+            if (inputLocation.accuracy > 10)
+                if (isNotValid(inputLocation)) {
+                    counter += 1
                 }
 
             if (counter != 0) {
-                if (counter < 3) {
-                    return currRoad?.let { getRoadLocation(it, currStep!!.location) }
-                        ?: currStep!!.location
-                } else {
+                if (counter < 3) return currStep?.location ?: location
+                else {
                     prevStep = null
                     counter = 0
                 }
             }
-        } else{
-            return currRoad?.let { getRoadLocation(it, currStep!!.location) }
-                ?: currStep!!.location
         }
 
         currSpeed = inputLocation.speed
@@ -348,6 +342,7 @@ class Viterbi(jsonString: String) {
             currStates.map { Pair(it.first, it.second / probSum) }.filter { it.second > 0.02 }
 
         var maxProb = 0.0
+        var currRoad: RoadState? = null
         for ((road, prob) in currStates) {
             if (maxProb < prob) {
                 maxProb = prob
